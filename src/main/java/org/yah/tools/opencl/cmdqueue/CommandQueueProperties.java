@@ -29,7 +29,7 @@ public enum CommandQueueProperties implements CLEnum {
         return CLVersion.CL10;
     }
 
-    public static long combine(Set<CommandQueueProperties> props) {
+    public static long combine(CommandQueueProperties... props) {
         long res = 0;
         for (CommandQueueProperties p : props) {
             res |= p.id;

@@ -1,7 +1,14 @@
 package org.yah.tools.opencl.mem;
 
-import static org.lwjgl.opencl.CL10.*;
-import static org.lwjgl.opencl.CL12.*;
+import static org.lwjgl.opencl.CL10.CL_MEM_ALLOC_HOST_PTR;
+import static org.lwjgl.opencl.CL10.CL_MEM_COPY_HOST_PTR;
+import static org.lwjgl.opencl.CL10.CL_MEM_READ_ONLY;
+import static org.lwjgl.opencl.CL10.CL_MEM_READ_WRITE;
+import static org.lwjgl.opencl.CL10.CL_MEM_USE_HOST_PTR;
+import static org.lwjgl.opencl.CL10.CL_MEM_WRITE_ONLY;
+import static org.lwjgl.opencl.CL12.CL_MEM_HOST_NO_ACCESS;
+import static org.lwjgl.opencl.CL12.CL_MEM_HOST_READ_ONLY;
+import static org.lwjgl.opencl.CL12.CL_MEM_HOST_WRITE_ONLY;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -41,7 +48,7 @@ public enum BufferProperties implements CLEnum {
         return version;
     }
 
-    public static long combine(Set<BufferProperties> props) {
+    public static long combine(BufferProperties... props) {
         long res = 0;
         for (BufferProperties p : props) {
             res |= p.id;

@@ -4,28 +4,23 @@
 package org.yah.tools.opencl;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 import org.lwjgl.opencl.CLCapabilities;
 import org.yah.tools.opencl.cmdqueue.CLCommandQueue;
+import org.yah.tools.opencl.cmdqueue.CLCommandQueue.EventsParams;
+import org.yah.tools.opencl.cmdqueue.CLCommandQueue.KernelNDRange;
 import org.yah.tools.opencl.cmdqueue.CLEvent;
 import org.yah.tools.opencl.cmdqueue.CommandQueueProperties;
-import org.yah.tools.opencl.cmdqueue.DefaultCLCommandQueue;
 import org.yah.tools.opencl.context.CLContext;
-import org.yah.tools.opencl.context.DefaultCLContext;
 import org.yah.tools.opencl.kernel.CLKernel;
-import org.yah.tools.opencl.kernel.DefaultCLKernel;
 import org.yah.tools.opencl.mem.BufferProperties;
 import org.yah.tools.opencl.mem.CLBuffer;
-import org.yah.tools.opencl.mem.DefaultCLBuffer;
 import org.yah.tools.opencl.platform.CLPlaform;
 import org.yah.tools.opencl.program.CLProgram;
-import org.yah.tools.opencl.program.DefaultCLProgram;
 
 /**
  * @author Yah
@@ -36,73 +31,106 @@ public class CLEnvironment implements AutoCloseable {
     private final CLPlaform plaform;
     private final CLContext context;
     private final CLCommandQueue commandQueue;
+    private final CLProgram program;
+    private final boolean ownContext;
 
-    private final ClassLoader classLoader = CLEnvironment.class.getClassLoader();
-
-    private final List<CLObject> objects = new LinkedList<CLObject>();
-
-    public CLEnvironment() {
-        this.context = DefaultCLContext.createDefault(this::onError);
-        this.plaform = CLPlaform.createPlatform(context.getPlatform());
-        commandQueue = new DefaultCLCommandQueue(context, context.getDevice(),
-                CommandQueueProperties.setOf(CommandQueueProperties.QUEUE_PROFILING_ENABLE));
+    public CLEnvironment(String sourceResource, CommandQueueProperties... queueProperties) throws IOException {
+        this(sourceResource, null, queueProperties);
     }
 
-    public CLEnvironment(DefaultCLContext context, CLCommandQueue commandQueue) {
+    public CLEnvironment(String sourceResource,
+            String options,
+            CommandQueueProperties... queueProperties) throws IOException {
+        this(null, sourceResource, options, queueProperties);
+    }
+
+    public CLEnvironment(CLContext context,
+            String sourceResource,
+            String options,
+            CommandQueueProperties... queueProperties) throws IOException {
+        if (context == null) {
+            context = CLContext.createDefault(this::onError);
+            ownContext = true;
+        } else {
+            ownContext = false;
+        }
         this.context = context;
         this.plaform = CLPlaform.createPlatform(context.getPlatform());
-        this.commandQueue = commandQueue;
+
+        commandQueue = new CLCommandQueue(context, context.getDevice(), queueProperties);
+        program = CLProgram.fromResource(context, options, sourceResource);
     }
 
     public CLCapabilities getCapabilities() { return plaform.getCapabilities(); }
 
     @Override
     public void close() {
-        objects.forEach(CLEnvironment::closeQuietly);
-        objects.clear();
-        closeQuietly(context);
+        if (ownContext)
+            closeQuietly(context);
     }
 
     private void onError(String message, ByteBuffer data) {
         System.err.println("OpenCL error: " + message);
     }
 
-    public CLKernel build(String name, String sourceResource) throws IOException {
-        return build(name, sourceResource, null);
+    public CLKernel kernel(String name) throws IOException {
+        return new CLKernel(program, name);
     }
 
-    public CLKernel build(String name, String sourceResource, String options) throws IOException {
-        CLProgram program = addObject(CLProgram.class,
-                DefaultCLProgram.fromResource(context, options, sourceResource));
-        return addObject(CLKernel.class, new DefaultCLKernel(program, name));
+    public CLBuffer mem(ByteBuffer hostBuffer, BufferProperties... properties) {
+        return new CLBuffer(context, hostBuffer, properties);
     }
 
-    public CLBuffer mem(ByteBuffer hostBuffer, Set<BufferProperties> properties) {
-        DefaultCLBuffer buffer = new DefaultCLBuffer(context, properties, hostBuffer);
-        return addObject(CLBuffer.class, buffer);
+    public CLBuffer mem(int size, BufferProperties... properties) {
+        return new CLBuffer(context, size, properties);
     }
 
-    public CLBuffer mem(int size, Set<BufferProperties> properties) {
-        return addObject(CLBuffer.class, new DefaultCLBuffer(context, properties, size));
+    public CLEvent event() {
+        return new CLEvent(context);
     }
 
     public void run(CLKernel kernel, long[] globalWorkSizes) {
         commandQueue.run(kernel, globalWorkSizes);
     }
 
-    public void run(CLKernel kernel, long[] globalWorkOffsets, long[] globalWorkSizes,
-            long[] localWorkSizes,
-            List<CLEvent> eventWaitList, CLEvent event) {
-        commandQueue.run(kernel, globalWorkOffsets, globalWorkSizes, localWorkSizes, eventWaitList,
-                event);
+    public KernelNDRange createKernelRange() {
+        return commandQueue.createKernelRange();
     }
 
-    public void read(CLBuffer buffer, ByteBuffer target, boolean blocking, long offset,
-            List<CLEvent> eventWaitList, CLEvent event) {
-        commandQueue.read(buffer, target, blocking, offset, eventWaitList, event);
+    public void run(CLKernel kernel, KernelNDRange range) {
+        commandQueue.run(kernel, range);
+    }
+
+
+    public void read(CLBuffer buffer, ByteBuffer target, boolean blocking, long offset, EventsParams events) {
+        commandQueue.read(buffer, target, blocking, offset, events);
+    }
+
+    public void read(CLBuffer buffer, FloatBuffer target) {
+        commandQueue.read(buffer, target);
+    }
+
+    public void read(CLBuffer buffer, DoubleBuffer target) {
+        commandQueue.read(buffer, target);
+    }
+
+    public void read(CLBuffer buffer, IntBuffer target, boolean blocking, long offset, EventsParams events) {
+        commandQueue.read(buffer, target, blocking, offset, events);
+    }
+
+    public void read(CLBuffer buffer, FloatBuffer target, boolean blocking, long offset, EventsParams events) {
+        commandQueue.read(buffer, target, blocking, offset, events);
+    }
+
+    public void read(CLBuffer buffer, DoubleBuffer target, boolean blocking, long offset, EventsParams events) {
+        commandQueue.read(buffer, target, blocking, offset, events);
     }
 
     public void read(CLBuffer buffer, ByteBuffer target) {
+        commandQueue.read(buffer, target);
+    }
+
+    public void read(CLBuffer buffer, IntBuffer target) {
         commandQueue.read(buffer, target);
     }
 
@@ -110,23 +138,12 @@ public class CLEnvironment implements AutoCloseable {
         commandQueue.write(buffer, target);
     }
 
-    public void write(DefaultCLBuffer buffer, ByteBuffer target, boolean blocking, long offset,
-            List<CLEvent> eventWaitList, CLEvent event) {
-        commandQueue.write(buffer, target, blocking, offset, eventWaitList, event);
+    public void write(CLBuffer buffer, ByteBuffer target, boolean blocking, long offset, EventsParams events) {
+        commandQueue.write(buffer, target, blocking, offset, events);
     }
 
-    @SuppressWarnings("unchecked")
-    private <T extends CLObject> T addObject(Class<T> type, T instance) {
-        objects.add(instance);
-        return (T) Proxy.newProxyInstance(classLoader, new Class[] { type },
-                (p, m, args) -> invokeObject(instance, m, args));
-    }
-
-    private Object invokeObject(CLObject object, Method method, Object[] args) throws Exception {
-        if (method.getName().equals("close") && method.getParameterCount() == 0) {
-            objects.remove(object);
-        }
-        return method.invoke(object, args);
+    public void finish() {
+        commandQueue.finish();
     }
 
     private static void closeQuietly(CLObject o) {
@@ -135,7 +152,8 @@ public class CLEnvironment implements AutoCloseable {
         } catch (Exception e) {}
     }
 
-    public void finish() {
-        commandQueue.finish();
+    public void flush() {
+        commandQueue.flush();
     }
+
 }

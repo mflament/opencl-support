@@ -54,7 +54,7 @@ import org.lwjgl.BufferUtils;
 
 public class CLException extends RuntimeException {
 
-    private static String messageFor(int code) {
+    public static String messageFor(int code) {
         switch (code) {
         case CL_DEVICE_NOT_FOUND:
             return "CL_DEVICE_NOT_FOUND";
@@ -154,7 +154,12 @@ public class CLException extends RuntimeException {
     private final int error;
 
     public CLException(int error) {
-        super(String.format("OpenCL error %d: %s", error, messageFor(error)));
+        this(error, null);
+    }
+
+    public CLException(int error, String message) {
+        super(String.format("OpenCL error %d: %s%s", error, messageFor(error),
+                message != null ? ("\n" + message) : ""));
         this.error = error;
     }
 
@@ -176,7 +181,7 @@ public class CLException extends RuntimeException {
         check(buffer.get(0));
     }
 
-    public static final <T> T apply(Function<IntBuffer,T> action) {
+    public static final <T> T apply(Function<IntBuffer, T> action) {
         IntBuffer buffer = errorBuffers.get();
         buffer.position(0);
         T res = action.apply(buffer);

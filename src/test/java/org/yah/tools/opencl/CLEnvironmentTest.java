@@ -16,22 +16,24 @@ public class CLEnvironmentTest {
 
     @Test
     public void test() throws IOException, InterruptedException {
-        try (CLEnvironment environment = new CLEnvironment()) {
-            CLKernel kernel = environment.build("sum", "sum.cl");
+        try (CLEnvironment environment = new CLEnvironment("sum.cl")) {
+            CLKernel kernel = environment.kernel("sum");
             int size = 10000000;
             ByteBuffer buffer = BufferUtils.createByteBuffer(size * Float.BYTES);
             createInputs(buffer.asFloatBuffer(), 0, 1);
             CLBuffer a = environment.mem(buffer,
-                    BufferProperties.setOf(BufferProperties.MEM_READ_ONLY,
-                            BufferProperties.MEM_COPY_HOST_PTR));
+                    BufferProperties.MEM_READ_ONLY,
+                    BufferProperties.MEM_COPY_HOST_PTR,
+                    BufferProperties.MEM_HOST_WRITE_ONLY);
 
             createInputs(buffer.asFloatBuffer(), size - 1, -1);
             CLBuffer b = environment.mem(buffer,
-                    BufferProperties.setOf(BufferProperties.MEM_READ_ONLY,
-                            BufferProperties.MEM_COPY_HOST_PTR));
+                    BufferProperties.MEM_READ_ONLY,
+                    BufferProperties.MEM_COPY_HOST_PTR,
+                    BufferProperties.MEM_HOST_WRITE_ONLY);
 
             CLBuffer res = environment.mem(size * Float.BYTES,
-                    BufferProperties.setOf(BufferProperties.MEM_WRITE_ONLY));
+                    BufferProperties.MEM_WRITE_ONLY, BufferProperties.MEM_HOST_READ_ONLY);
 
             kernel.setArg(0, a);
             kernel.setArg(1, b);

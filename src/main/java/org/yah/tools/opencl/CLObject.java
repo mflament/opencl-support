@@ -4,4 +4,6 @@ public interface CLObject extends AutoCloseable {
 
     long getId();
 
+    @Override
+    default void close() {}
 }
