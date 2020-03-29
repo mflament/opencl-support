@@ -22,6 +22,7 @@ import org.yah.tools.opencl.mem.CLBuffer;
  * @author Yah
  *
  */
+@SuppressWarnings("unused")
 public class VectorSum extends AbstractCLSandbox {
 
     private static final int MAX_CONCURRENCY = 32;
@@ -328,7 +329,7 @@ public class VectorSum extends AbstractCLSandbox {
         int size = 1024 * 1024;
         int workGroupSize = 64;
         benchmark(size, workGroupSize);
-        //test(36, workGroupSize);
+        // test(36, workGroupSize);
     }
 
     private static void benchmark(int size, int workGroupSize) throws IOException {
