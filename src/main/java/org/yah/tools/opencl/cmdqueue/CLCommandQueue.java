@@ -13,11 +13,13 @@ import static org.lwjgl.opencl.CL10.clFlush;
 import static org.lwjgl.opencl.CL10.clReleaseCommandQueue;
 import static org.yah.tools.opencl.CLException.check;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.yah.tools.opencl.CLException;
 import org.yah.tools.opencl.CLObject;
@@ -35,6 +37,7 @@ public class CLCommandQueue implements CLObject {
     private long id;
 
     private final int maxDimensions;
+    private final BigInteger maxWorkSize;
     private final long maxWorkGroupSize;
     private final long[] maxWorkItemSizes;
 
@@ -45,6 +48,10 @@ public class CLCommandQueue implements CLObject {
             CommandQueueProperties... properties) {
         id = CLException.apply(eb -> clCreateCommandQueue(context.getId(), device,
                 CommandQueueProperties.combine(properties), eb));
+        int addressBits = CLDevice.readDeviceInfo(device,
+                DeviceInfo.DEVICE_ADDRESS_BITS,
+                b -> b.getInt());
+        maxWorkSize = BigInteger.valueOf(2).pow(addressBits);
         maxDimensions = CLDevice.readDeviceInfo(device,
                 DeviceInfo.DEVICE_MAX_WORK_ITEM_DIMENSIONS,
                 b -> b.getInt());
@@ -73,14 +80,14 @@ public class CLCommandQueue implements CLObject {
         run(kernel, range);
     }
 
-    public void run(CLKernel kernel, KernelNDRange range) {
+    public long run(CLKernel kernel, KernelNDRange range) {
         check(clEnqueueNDRangeKernel(id, kernel.getId(), range.dimensions,
-                range.getGlobalWorkOffsetsBuffer(),
-                range.getGlobalWorkSizesBuffer(),
-                range.getLocalWorkSizesBuffer(),
+                range.globalWorkOffsetsBuffer(),
+                range.globalWorkSizesBuffer(),
+                range.localWorkSizesBuffer(),
                 range.getEventWaitListBuffer(),
                 range.getEventBuffer()));
-        range.flushEvent();
+        return range.flushEvent();
     }
 
     public void read(CLBuffer buffer, ByteBuffer target) {
@@ -99,34 +106,39 @@ public class CLCommandQueue implements CLObject {
         read(buffer, target, true, 0, EventsParams.EMPTY_PARAM);
     }
 
-    public void read(CLBuffer buffer, ByteBuffer target, boolean blocking, long offset, EventsParams events) {
+    public long read(CLBuffer buffer, ByteBuffer target, boolean blocking, long offset, EventsParams events) {
         check(clEnqueueReadBuffer(id, buffer.getId(), blocking, offset, target,
                 events.getEventWaitListBuffer(), events.getEventBuffer()));
+        return events.flushEvent();
     }
 
-    public void read(CLBuffer buffer, IntBuffer target, boolean blocking, long offset, EventsParams events) {
+    public long read(CLBuffer buffer, IntBuffer target, boolean blocking, long offset, EventsParams events) {
         check(clEnqueueReadBuffer(id, buffer.getId(), blocking, offset, target,
                 events.getEventWaitListBuffer(), events.getEventBuffer()));
+        return events.flushEvent();
     }
 
-    public void read(CLBuffer buffer, FloatBuffer target, boolean blocking, long offset, EventsParams events) {
+    public long read(CLBuffer buffer, FloatBuffer target, boolean blocking, long offset, EventsParams events) {
         check(clEnqueueReadBuffer(id, buffer.getId(), blocking, offset, target,
                 events.getEventWaitListBuffer(), events.getEventBuffer()));
+        return events.flushEvent();
     }
 
-    public void read(CLBuffer buffer, DoubleBuffer target, boolean blocking, long offset, EventsParams events) {
+    public long read(CLBuffer buffer, DoubleBuffer target, boolean blocking, long offset, EventsParams events) {
         check(clEnqueueReadBuffer(id, buffer.getId(), blocking, offset, target,
                 events.getEventWaitListBuffer(), events.getEventBuffer()));
+        return events.flushEvent();
     }
 
     public void write(CLBuffer buffer, ByteBuffer target) {
         write(buffer, target, true, 0, EventsParams.EMPTY_PARAM);
     }
 
-    public void write(CLBuffer buffer, ByteBuffer target, boolean blocking, long offset,
+    public long write(CLBuffer buffer, ByteBuffer target, boolean blocking, long offset,
             EventsParams events) {
         check(clEnqueueWriteBuffer(id, buffer.getId(), blocking, offset, target,
                 events.getEventWaitListBuffer(), events.getEventBuffer()));
+        return events.flushEvent();
     }
 
     public void flush() {
@@ -151,20 +163,19 @@ public class CLCommandQueue implements CLObject {
         private static final EventsParams EMPTY_PARAM = new EventsParams();
 
         private PointerBuffer eventWaitListBuffer;
-        private PointerBuffer eventBuffer;
-        private CLEvent event;
 
-        public void reset() {
+        private PointerBuffer eventBuffer = BufferUtils.createPointerBuffer(1).limit(0);
+
+        public EventsParams reset() {
             if (eventWaitListBuffer != null)
                 eventWaitListBuffer.limit(0);
-            event = null;
+            eventBuffer.limit(0);
+            return this;
         }
 
-        protected void flushEvent() {
-            if (event != null) {
-                event.setId(eventBuffer.get(0));
-                event = null;
-            }
+        protected long flushEvent() {
+            if (eventBuffer.hasRemaining()) { return eventBuffer.get(); }
+            return 0;
         }
 
         public PointerBuffer getEventWaitListBuffer() {
@@ -174,12 +185,24 @@ public class CLCommandQueue implements CLObject {
         }
 
         public PointerBuffer getEventBuffer() {
-            if (event != null)
+            if (eventBuffer.hasRemaining())
                 return eventBuffer;
             return null;
         }
 
-        public void setEventWaitList(CLEvent... events) {
+        public void setEventWaitList(long event) {
+            if (event == 0 && eventWaitListBuffer != null) {
+                eventWaitListBuffer.position(0);
+                eventWaitListBuffer.limit(0);
+            } else if (event != 0) {
+                ensureEventWaitListCapacity(1);
+                eventWaitListBuffer.position(0);
+                eventWaitListBuffer.put(event);
+                eventWaitListBuffer.flip();
+            }
+        }
+        
+        public void setEventWaitList(long... events) {
             if (events.length == 0 && eventWaitListBuffer != null) {
                 eventWaitListBuffer.position(0);
                 eventWaitListBuffer.limit(0);
@@ -187,16 +210,14 @@ public class CLCommandQueue implements CLObject {
                 ensureEventWaitListCapacity(events.length);
                 eventWaitListBuffer.position(0);
                 for (int i = 0; i < events.length; i++) {
-                    eventWaitListBuffer.put(events[i].getId());
+                    eventWaitListBuffer.put(events[i]);
                 }
                 eventWaitListBuffer.flip();
             }
         }
 
-        public void setEvent(CLEvent event) {
-            this.event = event;
-            if (event != null && eventBuffer == null)
-                eventBuffer = createPointerBuffer(1);
+        public void requestEvent() {
+            this.eventBuffer.limit(1);
         }
 
         private void ensureEventWaitListCapacity(int capacity) {
@@ -204,7 +225,14 @@ public class CLCommandQueue implements CLObject {
                 eventWaitListBuffer = createPointerBuffer(Math.max(capacity, MIN_EVENTS_CAPACITY));
             eventWaitListBuffer.limit(eventWaitListBuffer.capacity());
         }
+    }
 
+    private static BigInteger mul(PointerBuffer buffer) {
+        BigInteger res = BigInteger.valueOf(0);
+        for (int i = 0; i < buffer.remaining(); i++) {
+            res.add(BigInteger.valueOf(buffer.get(i)));
+        }
+        return res;
     }
 
     public class KernelNDRange extends EventsParams {
@@ -218,13 +246,21 @@ public class CLCommandQueue implements CLObject {
             globalWorkSizesBuffer = createPointerBuffer(maxDimensions);
         }
 
+        public BigInteger workSize() {
+            return mul(globalWorkSizesBuffer);
+        }
+
+        public int workGroupSize() {
+            return mul(localWorkSizesBuffer).intValue();
+        }
+
         public void reset(long... sizes) {
             reset();
             globalWorkSizes(sizes);
         }
 
         @Override
-        public void reset() {
+        public KernelNDRange reset() {
             super.reset();
             dimensions = 0;
             globalWorkSizesBuffer.limit(0);
@@ -232,17 +268,20 @@ public class CLCommandQueue implements CLObject {
                 globalWorkSizesBuffer.limit(0);
             if (localWorkSizesBuffer != null)
                 localWorkSizesBuffer.limit(0);
+            return this;
         }
 
-        public PointerBuffer getGlobalWorkSizesBuffer() { return globalWorkSizesBuffer; }
+        public PointerBuffer globalWorkSizesBuffer() {
+            return globalWorkSizesBuffer;
+        }
 
-        public PointerBuffer getGlobalWorkOffsetsBuffer() {
+        public PointerBuffer globalWorkOffsetsBuffer() {
             if (globalWorkOffsetsBuffer != null && globalWorkOffsetsBuffer.hasRemaining())
                 return globalWorkOffsetsBuffer;
             return null;
         }
 
-        public PointerBuffer getLocalWorkSizesBuffer() {
+        public PointerBuffer localWorkSizesBuffer() {
             if (localWorkSizesBuffer != null && localWorkSizesBuffer.hasRemaining())
                 return localWorkSizesBuffer;
             return localWorkSizesBuffer;
@@ -280,27 +319,36 @@ public class CLCommandQueue implements CLObject {
                 localWorkSizesBuffer = createPointerBuffer(maxDimensions);
                 localWorkSizesBuffer.limit(dimensions);
             }
+            localWorkSizesBuffer.put(sizes);
+            localWorkSizesBuffer.flip();
+        }
 
-            long total = 0;
-            for (int d = 0; d < sizes.length; d++) {
-                long size = sizes[d];
-                if (size > maxWorkItemSizes[d]) {
-                    throw new IllegalArgumentException(
-                            String.format("Invalid localWorkSize[%d]=%d, max %d", d, size, maxWorkItemSizes[d]));
-                }
-                localWorkSizesBuffer.put(d, size);
-                total += size;
-            }
-
-            if (total > maxWorkGroupSize) {
+        public void validate() {
+            if (workSize().compareTo(maxWorkSize) > 0)
                 throw new IllegalArgumentException(
-                        String.format("Invalid total work group size %d, max %d", total,
-                                maxWorkGroupSize));
+                        String.format("Invalid workSize %d, max %d", workSize(), maxWorkSize));
+
+            if (localWorkSizesBuffer != null) {
+                long total = 1;
+                for (int d = 0; d < localWorkSizesBuffer.remaining(); d++) {
+                    long size = localWorkSizesBuffer.get(d);
+                    if (size > maxWorkItemSizes[d]) {
+                        throw new IllegalArgumentException(
+                                String.format("Invalid localWorkSize[%d]=%d, max %d", d, size, maxWorkItemSizes[d]));
+                    }
+                    total *= size;
+                }
+
+                if (total > maxWorkGroupSize) {
+                    throw new IllegalArgumentException(
+                            String.format("Invalid total work group size %d, max %d", total,
+                                    maxWorkGroupSize));
+                }
             }
         }
 
         private void checkDimension(int dim) {
-            if (dim >= dimensions)
+            if (dim > dimensions)
                 throw new IllegalArgumentException("dim " + dim + " is out of bound [0," + dimensions + "[");
         }
 

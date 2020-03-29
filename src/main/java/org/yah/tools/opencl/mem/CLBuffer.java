@@ -7,6 +7,7 @@ import static org.lwjgl.opencl.CL10.clCreateBuffer;
 import static org.lwjgl.opencl.CL10.clReleaseMemObject;
 
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 
 import org.yah.tools.opencl.CLException;
 import org.yah.tools.opencl.context.CLContext;
@@ -25,6 +26,12 @@ public class CLBuffer implements CLMemObject {
     }
 
     public CLBuffer(CLContext context, ByteBuffer hostBuffer,
+            BufferProperties... properties) {
+        id = CLException.apply(eb -> clCreateBuffer(context.getId(),
+                BufferProperties.combine(properties), hostBuffer, eb));
+    }
+
+    public CLBuffer(CLContext context, FloatBuffer hostBuffer,
             BufferProperties... properties) {
         id = CLException.apply(eb -> clCreateBuffer(context.getId(),
                 BufferProperties.combine(properties), hostBuffer, eb));

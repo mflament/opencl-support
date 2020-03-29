@@ -16,7 +16,7 @@ public class CLEnvironmentTest {
 
     @Test
     public void test() throws IOException, InterruptedException {
-        try (CLEnvironment environment = new CLEnvironment("sum.cl")) {
+        try (CLEnvironment environment = new CLEnvironment("test.cl")) {
             CLKernel kernel = environment.kernel("sum");
             int size = 10000000;
             ByteBuffer buffer = BufferUtils.createByteBuffer(size * Float.BYTES);

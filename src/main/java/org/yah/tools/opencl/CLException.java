@@ -165,10 +165,6 @@ public class CLException extends RuntimeException {
 
     public int getError() { return error; }
 
-//    public static final void check(IntBuffer buffer) {
-//        check(buffer.get(0));
-//    }
-
     public static final void check(int error) {
         if (error != CL_SUCCESS)
             throw new CLException(error);

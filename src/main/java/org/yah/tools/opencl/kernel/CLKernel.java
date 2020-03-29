@@ -62,4 +62,9 @@ public class CLKernel implements CLObject {
     public void setArg(int index, double value) {
         clSetKernelArg(id, index, new double[] { value });
     }
+
+    public void setArgSize(int index, long size) {
+        clSetKernelArg(id, index, size);
+    }
+
 }

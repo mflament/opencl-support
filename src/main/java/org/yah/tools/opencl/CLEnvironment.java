@@ -13,7 +13,6 @@ import org.lwjgl.opencl.CLCapabilities;
 import org.yah.tools.opencl.cmdqueue.CLCommandQueue;
 import org.yah.tools.opencl.cmdqueue.CLCommandQueue.EventsParams;
 import org.yah.tools.opencl.cmdqueue.CLCommandQueue.KernelNDRange;
-import org.yah.tools.opencl.cmdqueue.CLEvent;
 import org.yah.tools.opencl.cmdqueue.CommandQueueProperties;
 import org.yah.tools.opencl.context.CLContext;
 import org.yah.tools.opencl.kernel.CLKernel;
@@ -73,7 +72,7 @@ public class CLEnvironment implements AutoCloseable {
         System.err.println("OpenCL error: " + message);
     }
 
-    public CLKernel kernel(String name) throws IOException {
+    public CLKernel kernel(String name) {
         return new CLKernel(program, name);
     }
 
@@ -81,29 +80,28 @@ public class CLEnvironment implements AutoCloseable {
         return new CLBuffer(context, hostBuffer, properties);
     }
 
+    public CLBuffer mem(FloatBuffer hostBuffer, BufferProperties... properties) {
+        return new CLBuffer(context, hostBuffer, properties);
+    }
+
     public CLBuffer mem(int size, BufferProperties... properties) {
         return new CLBuffer(context, size, properties);
     }
 
-    public CLEvent event() {
-        return new CLEvent(context);
+    public KernelNDRange kernelRange() {
+        return commandQueue.createKernelRange();
     }
 
     public void run(CLKernel kernel, long[] globalWorkSizes) {
         commandQueue.run(kernel, globalWorkSizes);
     }
 
-    public KernelNDRange createKernelRange() {
-        return commandQueue.createKernelRange();
+    public long run(CLKernel kernel, KernelNDRange range) {
+        return commandQueue.run(kernel, range);
     }
 
-    public void run(CLKernel kernel, KernelNDRange range) {
-        commandQueue.run(kernel, range);
-    }
-
-
-    public void read(CLBuffer buffer, ByteBuffer target, boolean blocking, long offset, EventsParams events) {
-        commandQueue.read(buffer, target, blocking, offset, events);
+    public long read(CLBuffer buffer, ByteBuffer target, boolean blocking, long offset, EventsParams events) {
+        return commandQueue.read(buffer, target, blocking, offset, events);
     }
 
     public void read(CLBuffer buffer, FloatBuffer target) {
@@ -114,16 +112,16 @@ public class CLEnvironment implements AutoCloseable {
         commandQueue.read(buffer, target);
     }
 
-    public void read(CLBuffer buffer, IntBuffer target, boolean blocking, long offset, EventsParams events) {
-        commandQueue.read(buffer, target, blocking, offset, events);
+    public long read(CLBuffer buffer, IntBuffer target, boolean blocking, long offset, EventsParams events) {
+        return commandQueue.read(buffer, target, blocking, offset, events);
     }
 
-    public void read(CLBuffer buffer, FloatBuffer target, boolean blocking, long offset, EventsParams events) {
-        commandQueue.read(buffer, target, blocking, offset, events);
+    public long read(CLBuffer buffer, FloatBuffer target, boolean blocking, long offset, EventsParams events) {
+        return commandQueue.read(buffer, target, blocking, offset, events);
     }
 
-    public void read(CLBuffer buffer, DoubleBuffer target, boolean blocking, long offset, EventsParams events) {
-        commandQueue.read(buffer, target, blocking, offset, events);
+    public long read(CLBuffer buffer, DoubleBuffer target, boolean blocking, long offset, EventsParams events) {
+        return commandQueue.read(buffer, target, blocking, offset, events);
     }
 
     public void read(CLBuffer buffer, ByteBuffer target) {
@@ -155,5 +153,7 @@ public class CLEnvironment implements AutoCloseable {
     public void flush() {
         commandQueue.flush();
     }
+
+    public long getDevice() { return context.getDevice(); }
 
 }

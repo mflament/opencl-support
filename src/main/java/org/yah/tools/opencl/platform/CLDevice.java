@@ -6,6 +6,7 @@ import static org.lwjgl.opencl.CL10.clGetDeviceIDs;
 import static org.lwjgl.opencl.CL10.clGetDeviceInfo;
 import static org.yah.tools.opencl.CLException.check;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -95,4 +96,38 @@ public class CLDevice {
         }
     }
 
+    public static BigInteger getMaxWorkSize(long device) {
+        int addressBits = CLDevice.readDeviceInfo(device,
+                DeviceInfo.DEVICE_ADDRESS_BITS,
+                b -> b.getInt());
+        return BigInteger.valueOf(2).pow(addressBits);
+    }
+
+    // TOSEE: possible overflow everywhere (size_t > long on 64bits, uint > int ...)
+    
+    public static int getMaxDimensions(long device) {
+        return CLDevice.readDeviceInfo(device, DeviceInfo.DEVICE_MAX_WORK_ITEM_DIMENSIONS,
+                b -> b.getInt());
+    }
+
+    public static long getMaxWorkGroupSize(long device) {
+        return CLDevice.readDeviceInfo(device, DeviceInfo.DEVICE_MAX_WORK_GROUP_SIZE, b -> PointerBuffer.get(b));
+    }
+
+    public static int getMaxComputeUnits(long device) {
+        return CLDevice.readDeviceInfo(device, DeviceInfo.DEVICE_MAX_COMPUTE_UNITS,
+                b -> b.getInt());
+    }
+
+    public static long[] getMaxWorkItemSizes(long device) {
+        int maxDimensions = getMaxDimensions(device);
+        long[] sizes = new long[maxDimensions];
+        CLDevice.readDeviceInfo(device, DeviceInfo.DEVICE_MAX_WORK_ITEM_SIZES, b -> {
+            for (int i = 0; i < maxDimensions; i++) {
+                sizes[i] = PointerBuffer.get(b);
+            }
+            return sizes;
+        });
+        return sizes;
+    }
 }
