@@ -21,7 +21,7 @@ public enum DeviceType implements CLEnum {
     private final int id;
     private final CLVersion version;
 
-    private DeviceType(int id, CLVersion version) {
+    DeviceType(int id, CLVersion version) {
         this.id = id;
         this.version = version;
     }

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.yah.tools.opencl.sandbox;
 
 import java.io.IOException;
@@ -13,6 +10,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 
 import org.lwjgl.BufferUtils;
+import org.yah.tools.opencl.CLEnvironment;
+import org.yah.tools.opencl.CLUtils;
 import org.yah.tools.opencl.cmdqueue.CLCommandQueue.KernelNDRange;
 import org.yah.tools.opencl.kernel.CLKernel;
 import org.yah.tools.opencl.mem.BufferProperties;
@@ -55,27 +54,27 @@ public class VectorSum extends AbstractCLSandbox {
     }
 
     public VectorSum(String type, int size, int wgSize) throws IOException {
-        super("vector_sum.cl", "-DTYPE=" + type);
+        super(CLEnvironment.builder().withSourceResource("vector_sum.cl").withOptions("-DTYPE=" + type).build());
 
         this.size = size;
-        workGroupSize = nextPowerOfTwo(wgSize);
+        workGroupSize = CLUtils.nextPowerOfTwo(wgSize);
         int workItems = div(size, 2);
         int workGroups = div(workItems, workGroupSize);
 
         IntFunction<CpuSumTask<?>> taskFactory;
         ByteBuffer buffer;
-        if (type == null || type == "float") {
-            arrayFactory = s -> new float[s];
+        if (type == null || type.equals("float")) {
+            arrayFactory = float[]::new;
             elementBytes = Float.BYTES;
             taskFactory = FloatSumTask::new;
             resultsReader = b -> b.getFloat(0);
-        } else if (type == "double") {
-            arrayFactory = s -> new double[s];
+        } else if (type.equals("double")) {
+            arrayFactory = double[]::new;
             elementBytes = Double.BYTES;
             taskFactory = DoubleSumTask::new;
             resultsReader = b -> b.getDouble(0);
-        } else if (type == "int") {
-            arrayFactory = s -> new int[s];
+        } else if (type.equals("int")) {
+            arrayFactory = int[]::new;
             elementBytes = Integer.BYTES;
             taskFactory = IntSumTask::new;
             resultsReader = b -> b.getInt(0);
@@ -156,7 +155,7 @@ public class VectorSum extends AbstractCLSandbox {
             size = workGroups;
             inputs = clresult;
         }
-        range.reset().setEventWaitList(event);
+        range.reset().waitForEvent(event);
         environment.read(clresult, resultBuffer);
         environment.finish();
 
@@ -168,7 +167,7 @@ public class VectorSum extends AbstractCLSandbox {
         range.globalWorkSizes(workItems);
         range.localWorkSizes(groupSize);
         if (waitFor != 0)
-            range.setEventWaitList(waitFor);
+            range.waitForEvent(waitFor);
         range.requestEvent();
         kernel.setArg(0, inputs);
         kernel.setArg(1, clresult);
@@ -310,8 +309,7 @@ public class VectorSum extends AbstractCLSandbox {
     private static final int RUNS = 1000;
     private static final double NS_MS = 1.0 / TimeUnit.NANOSECONDS.convert(1, TimeUnit.MILLISECONDS);
 
-    private static double benchmark(Runnable action)
-            throws IOException {
+    private static double benchmark(Runnable action) {
         for (int i = 0; i < WARMUP; i++) {
             action.run();
         }
@@ -334,7 +332,7 @@ public class VectorSum extends AbstractCLSandbox {
 
     private static void benchmark(int size, int workGroupSize) throws IOException {
         try (VectorSum vs = new VectorSum("int", size, workGroupSize)) {
-            double avg = benchmark(() -> vs.clsum());
+            double avg = benchmark(vs::clsum);
             System.out.println(String.format("clsum(%d,%d): %fms", size, workGroupSize, avg));
 
             avg = benchmark(() -> vs.cpusum(1));
@@ -354,9 +352,8 @@ public class VectorSum extends AbstractCLSandbox {
             double ssum = vs.cpusum(1);
             double psum = vs.cpusum(4);
 
-            @SuppressWarnings("resource")
-            PrintStream ps = Math.abs(clsum - psum) < EPSILON && Math.abs(clsum - ssum) < EPSILON ? System.out
-                    : System.err;
+            PrintStream ps = Math.abs(clsum - psum) < EPSILON && Math.abs(clsum - ssum) < EPSILON ?
+                    System.out : System.err;
             ps.println(clsum);
             ps.println(ssum);
             ps.println(psum);

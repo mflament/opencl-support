@@ -165,19 +165,19 @@ public class CLException extends RuntimeException {
 
     public int getError() { return error; }
 
-    public static final void check(int error) {
+    public static void check(int error) {
         if (error != CL_SUCCESS)
             throw new CLException(error);
     }
 
-    public static final void run(Consumer<IntBuffer> action) {
+    public static void run(Consumer<IntBuffer> action) {
         IntBuffer buffer = errorBuffers.get();
         buffer.position(0);
         action.accept(buffer);
         check(buffer.get(0));
     }
 
-    public static final <T> T apply(Function<IntBuffer, T> action) {
+    public static <T> T apply(Function<IntBuffer, T> action) {
         IntBuffer buffer = errorBuffers.get();
         buffer.position(0);
         T res = action.apply(buffer);
@@ -185,10 +185,5 @@ public class CLException extends RuntimeException {
         return res;
     }
 
-    private static final ThreadLocal<IntBuffer> errorBuffers = new ThreadLocal<IntBuffer>() {
-        @Override
-        protected IntBuffer initialValue() {
-            return BufferUtils.createIntBuffer(1);
-        }
-    };
+    private static final ThreadLocal<IntBuffer> errorBuffers = ThreadLocal.withInitial(() -> BufferUtils.createIntBuffer(1));
 }

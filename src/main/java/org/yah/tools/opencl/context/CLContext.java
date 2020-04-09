@@ -36,7 +36,7 @@ public class CLContext implements CLObject {
             buffer.flip();
             return buffer;
         }
-    };
+    }
 
     @FunctionalInterface
     public interface ErrorHandler {
@@ -57,8 +57,8 @@ public class CLContext implements CLObject {
             long... deviceIds) {
         this.platform = platform;
         devices = BufferUtils.createPointerBuffer(deviceIds.length);
-        for (int i = 0; i < deviceIds.length; i++) {
-            devices.put(deviceIds[i]);
+        for (long deviceId : deviceIds) {
+            devices.put(deviceId);
         }
         devices.flip();
         id = CLException.apply(eb -> clCreateContext(properties.toPointerBuffer(), devices,

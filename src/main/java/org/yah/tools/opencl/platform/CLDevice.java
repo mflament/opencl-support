@@ -72,7 +72,7 @@ public class CLDevice {
     }
 
     public static CLDevice createDevice(long deviceId) {
-        long platformId = readDeviceInfo(deviceId, DeviceInfo.DEVICE_PLATFORM, b -> b.getLong());
+        long platformId = readDeviceInfo(deviceId, DeviceInfo.DEVICE_PLATFORM, ByteBuffer::getLong);
         String name = readDeviceInfo(deviceId, DeviceInfo.DEVICE_NAME,
                 b -> MemoryUtil.memUTF8(MemoryUtil.memAddress(b)));
         return new CLDevice(deviceId, platformId, name);
@@ -99,7 +99,7 @@ public class CLDevice {
     public static BigInteger getMaxWorkSize(long device) {
         int addressBits = CLDevice.readDeviceInfo(device,
                 DeviceInfo.DEVICE_ADDRESS_BITS,
-                b -> b.getInt());
+                ByteBuffer::getInt);
         return BigInteger.valueOf(2).pow(addressBits);
     }
 
@@ -107,16 +107,16 @@ public class CLDevice {
     
     public static int getMaxDimensions(long device) {
         return CLDevice.readDeviceInfo(device, DeviceInfo.DEVICE_MAX_WORK_ITEM_DIMENSIONS,
-                b -> b.getInt());
+                ByteBuffer::getInt);
     }
 
     public static long getMaxWorkGroupSize(long device) {
-        return CLDevice.readDeviceInfo(device, DeviceInfo.DEVICE_MAX_WORK_GROUP_SIZE, b -> PointerBuffer.get(b));
+        return CLDevice.readDeviceInfo(device, DeviceInfo.DEVICE_MAX_WORK_GROUP_SIZE, PointerBuffer::get);
     }
 
     public static int getMaxComputeUnits(long device) {
         return CLDevice.readDeviceInfo(device, DeviceInfo.DEVICE_MAX_COMPUTE_UNITS,
-                b -> b.getInt());
+                ByteBuffer::getInt);
     }
 
     public static long[] getMaxWorkItemSizes(long device) {

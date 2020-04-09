@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.yah.tools.opencl;
 
 import java.util.EnumSet;
@@ -18,6 +15,7 @@ public interface CLEnum {
 
     CLVersion version();
     
+    /** @noinspection BooleanMethodIsAlwaysInverted*/
     default boolean available(CLCapabilities capabilities) {
         return version().available(capabilities);
     }
@@ -28,9 +26,9 @@ public interface CLEnum {
                     + " is not an instance of " + CLEnum.class.getName());
         EnumSet<E> res = EnumSet.noneOf(enumType);
         E[] values = enumType.getEnumConstants();
-        for (int i = 0; i < values.length; i++) {
-            if (((CLEnum) values[i]).version() == version)
-                res.add(values[i]);
+        for (E value : values) {
+            if (((CLEnum) value).version() == version)
+                res.add(value);
         }
         return res;
     }

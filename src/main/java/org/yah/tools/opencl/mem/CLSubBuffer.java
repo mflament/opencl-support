@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.yah.tools.opencl.mem;
 
 import static org.lwjgl.opencl.CL10.clReleaseMemObject;

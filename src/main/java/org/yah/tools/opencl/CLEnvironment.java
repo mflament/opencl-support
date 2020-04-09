@@ -1,13 +1,4 @@
-/**
- * 
- */
 package org.yah.tools.opencl;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 
 import org.lwjgl.opencl.CLCapabilities;
 import org.yah.tools.opencl.cmdqueue.CLCommandQueue;
@@ -21,9 +12,19 @@ import org.yah.tools.opencl.mem.CLBuffer;
 import org.yah.tools.opencl.platform.CLPlaform;
 import org.yah.tools.opencl.program.CLProgram;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.yah.tools.opencl.platform.CLPlaform.createPlatform;
+
 /**
  * @author Yah
- *
  */
 public class CLEnvironment implements AutoCloseable {
 
@@ -31,61 +32,61 @@ public class CLEnvironment implements AutoCloseable {
     private final CLContext context;
     private final CLCommandQueue commandQueue;
     private final CLProgram program;
-    private final boolean ownContext;
 
-    public CLEnvironment(String sourceResource, CommandQueueProperties... queueProperties) throws IOException {
-        this(sourceResource, null, queueProperties);
+    private final List<AutoCloseable> resources;
+
+    private CLEnvironment(Builder builder, List<AutoCloseable> resources) {
+        this.context = builder.context;
+        this.commandQueue = builder.commandQueue;
+        this.program = builder.program;
+        this.plaform = createPlatform(context.getPlatform());
+        this.resources = resources;
     }
-
-    public CLEnvironment(String sourceResource,
-            String options,
-            CommandQueueProperties... queueProperties) throws IOException {
-        this(null, sourceResource, options, queueProperties);
-    }
-
-    public CLEnvironment(CLContext context,
-            String sourceResource,
-            String options,
-            CommandQueueProperties... queueProperties) throws IOException {
-        if (context == null) {
-            context = CLContext.createDefault(this::onError);
-            ownContext = true;
-        } else {
-            ownContext = false;
-        }
-        this.context = context;
-        this.plaform = CLPlaform.createPlatform(context.getPlatform());
-
-        commandQueue = new CLCommandQueue(context, context.getDevice(), queueProperties);
-        program = CLProgram.fromResource(context, options, sourceResource);
-    }
-
-    public CLCapabilities getCapabilities() { return plaform.getCapabilities(); }
 
     @Override
     public void close() {
-        if (ownContext)
-            closeQuietly(context);
+        for (AutoCloseable resource : resources) {
+            try {
+                resource.close();
+            } catch (Exception ignored) {
+            }
+        }
     }
 
-    private void onError(String message, ByteBuffer data) {
-        System.err.println("OpenCL error: " + message);
+    public long getDevice() {
+        return context.getDevice();
+    }
+
+    public long getPlaform() {
+        return plaform.getId();
+    }
+
+    public CLCapabilities getCapabilities() {
+        return plaform.getCapabilities();
     }
 
     public CLKernel kernel(String name) {
-        return new CLKernel(program, name);
+        return addResource(new CLKernel(program, name));
     }
 
     public CLBuffer mem(ByteBuffer hostBuffer, BufferProperties... properties) {
-        return new CLBuffer(context, hostBuffer, properties);
+        return addResource(new CLBuffer(context, hostBuffer, properties));
+    }
+
+    public CLBuffer mem(IntBuffer hostBuffer, BufferProperties... properties) {
+        return addResource(new CLBuffer(context, hostBuffer, properties));
     }
 
     public CLBuffer mem(FloatBuffer hostBuffer, BufferProperties... properties) {
-        return new CLBuffer(context, hostBuffer, properties);
+        return addResource(new CLBuffer(context, hostBuffer, properties));
+    }
+
+    public CLBuffer mem(DoubleBuffer hostBuffer, BufferProperties... properties) {
+        return addResource(new CLBuffer(context, hostBuffer, properties));
     }
 
     public CLBuffer mem(int size, BufferProperties... properties) {
-        return new CLBuffer(context, size, properties);
+        return addResource(new CLBuffer(context, size, properties));
     }
 
     public KernelNDRange kernelRange() {
@@ -140,20 +141,140 @@ public class CLEnvironment implements AutoCloseable {
         commandQueue.write(buffer, target, blocking, offset, events);
     }
 
-    public void finish() {
-        commandQueue.finish();
+    public long getId() {
+        return commandQueue.getId();
     }
 
-    private static void closeQuietly(CLObject o) {
-        try {
-            o.close();
-        } catch (Exception e) {}
+    public KernelNDRange createKernelRange() {
+        return commandQueue.createKernelRange();
+    }
+
+    public void write(CLBuffer buffer, IntBuffer target) {
+        commandQueue.write(buffer, target);
+    }
+
+    public void write(CLBuffer buffer, DoubleBuffer target) {
+        commandQueue.write(buffer, target);
+    }
+
+    public void write(CLBuffer buffer, FloatBuffer target) {
+        commandQueue.write(buffer, target);
+    }
+
+    public long write(CLBuffer buffer, IntBuffer target, boolean blocking, long offset, EventsParams events) {
+        return commandQueue.write(buffer, target, blocking, offset, events);
+    }
+
+    public long write(CLBuffer buffer, DoubleBuffer target, boolean blocking, long offset, EventsParams events) {
+        return commandQueue.write(buffer, target, blocking, offset, events);
+    }
+
+    public long write(CLBuffer buffer, FloatBuffer target, boolean blocking, long offset, EventsParams events) {
+        return commandQueue.write(buffer, target, blocking, offset, events);
+    }
+
+    public void finish() {
+        commandQueue.finish();
     }
 
     public void flush() {
         commandQueue.flush();
     }
 
-    public long getDevice() { return context.getDevice(); }
+    public void waitForEvents(EventsParams params) {
+        commandQueue.waitForEvents(params);
+    }
+
+    public void waitForEvent(long event) {
+        commandQueue.waitForEvent(event);
+    }
+
+    private <T extends AutoCloseable> T addResource(T resource) {
+        resources.add(resource);
+        return resource;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    private static void onError(String message, ByteBuffer data) {
+        System.err.println("OpenCL error: " + message);
+    }
+
+    public static final class Builder {
+        private CLContext context;
+        private CLCommandQueue commandQueue;
+        private CLProgram program;
+
+        private final CLProgram.Builder programBuilder = CLProgram.builder();
+
+        private CommandQueueProperties[] queueProperties = {};
+
+        private Builder() {
+        }
+
+        public Builder withContext(CLContext context) {
+            this.context = context;
+            return this;
+        }
+
+        public Builder withCommandQueue(CLCommandQueue commandQueue) {
+            this.commandQueue = commandQueue;
+            return this;
+        }
+
+        public Builder withProgram(CLProgram program) {
+            this.program = program;
+            return this;
+        }
+
+        public Builder withCommandQueueProperties(CommandQueueProperties... properties) {
+            this.queueProperties = properties;
+            return this;
+        }
+
+        public Builder withOptions(String options) {
+            programBuilder.withOptions(options);
+            return this;
+        }
+
+        public Builder withSourceFiles(String... files) throws IOException {
+            programBuilder.withSourceFiles(files);
+            return this;
+        }
+
+        public Builder withSourcePaths(Path... files) throws IOException {
+            programBuilder.withSourcePaths(files);
+            return this;
+        }
+
+        public Builder withSourceResource(String... resources)
+                throws IOException {
+            programBuilder.withSourceResource(resources);
+            return this;
+        }
+
+        public CLEnvironment build() {
+            List<AutoCloseable> resources = new ArrayList<>();
+            if (context == null) {
+                context = CLContext.createDefault(CLEnvironment::onError);
+                resources.add(context);
+            }
+
+            if (program == null) {
+                programBuilder.withContext(context);
+                program = programBuilder.build();
+                resources.add(program);
+            }
+
+            if (commandQueue == null) {
+                commandQueue = new CLCommandQueue(context, context.getDevice(), queueProperties);
+                resources.add(commandQueue);
+            }
+
+            return new CLEnvironment(this, resources);
+        }
+    }
 
 }

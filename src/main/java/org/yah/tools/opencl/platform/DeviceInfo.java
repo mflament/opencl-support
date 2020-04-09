@@ -219,6 +219,7 @@ public enum DeviceInfo implements CLEnum {
     }
 
     public CLInfoReader<?> getReader() {
+        //noinspection SwitchStatementWithTooFewBranches
         switch (this) {
         case DEVICE_MAX_WORK_ITEM_SIZES:
             return b -> {

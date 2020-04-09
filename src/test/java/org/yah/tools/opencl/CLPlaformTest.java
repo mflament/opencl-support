@@ -28,17 +28,18 @@ public class CLPlaformTest {
             devices.forEach(d -> {
                 System.out.println("\t  - " + d.getName());
                 DeviceInfo[] values = DeviceInfo.values();
-                for (int i = 0; i < values.length; i++) {
-                    if (!values[i].available(capabilities))
+                for (DeviceInfo value : values) {
+                    if (!value.available(capabilities))
                         continue;
-                    CLInfoReader<?> reader = values[i].getReader();
-                    Object info = d.getDeviceInfo(values[i], reader);
-                    System.out.println("\t\t" + values[i].name() + ": " + toString(info));
+                    CLInfoReader<?> reader = value.getReader();
+                    Object info = d.getDeviceInfo(value, reader);
+                    System.out.println("\t\t" + value.name() + ": " + toString(info));
                 }
             });
         });
-        System.out.println("\ndefault device: " + CLPlaform.defaultPlatform() + " / "
-                + CLPlaform.defaultPlatform().getDefaultDevice());
+        CLPlaform platform = CLPlaform.defaultPlatform();
+        CLDevice device = platform != null ? platform.getDefaultDevice() : null;
+        System.out.println("\ndefault device: " + platform + " / " + device);
     }
 
     private static String toString(Object value) {

@@ -15,8 +15,8 @@ import org.yah.tools.opencl.mem.CLBuffer;
 public class CLEnvironmentTest {
 
     @Test
-    public void test() throws IOException, InterruptedException {
-        try (CLEnvironment environment = new CLEnvironment("test.cl")) {
+    public void test() throws IOException {
+        try (CLEnvironment environment = CLEnvironment.builder().withSourceResource("test.cl").build()) {
             CLKernel kernel = environment.kernel("sum");
             int size = 10000000;
             ByteBuffer buffer = BufferUtils.createByteBuffer(size * Float.BYTES);
@@ -50,7 +50,7 @@ public class CLEnvironmentTest {
         }
     }
 
-    private FloatBuffer createInputs(FloatBuffer target, int start, int step) {
+    private void createInputs(FloatBuffer target, int start, int step) {
         target.position(0);
         int size = target.remaining();
         int v = start;
@@ -59,7 +59,6 @@ public class CLEnvironmentTest {
             v += step;
         }
         target.flip();
-        return target;
     }
 
 }

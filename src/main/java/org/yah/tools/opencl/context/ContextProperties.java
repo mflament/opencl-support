@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.yah.tools.opencl.context;
 
 import static org.lwjgl.opencl.CL10.CL_CONTEXT_PLATFORM;
