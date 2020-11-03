@@ -14,14 +14,6 @@
         <checkerframework.version>3.3.0</checkerframework.version>
     </properties>
     <dependencies>
-        <!--
-        <dependency>
-            <groupId>org.checkerframework</groupId>
-            <artifactId>checker-qual</artifactId>
-            <version>${checkerframework.version}</version>
-        </dependency>
-        -->
-
         <dependency>
             <groupId>org.lwjgl</groupId>
             <artifactId>lwjgl</artifactId>
