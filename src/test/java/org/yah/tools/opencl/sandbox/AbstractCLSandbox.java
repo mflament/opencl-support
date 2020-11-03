@@ -12,11 +12,11 @@ public abstract class AbstractCLSandbox implements AutoCloseable {
     protected final Random random;
 
     public AbstractCLSandbox(String sourceResource) throws IOException {
-        this(sourceResource, null);
+        this(CLEnvironment.builder().withSourceResource(sourceResource).build());
     }
 
-    public AbstractCLSandbox(String sourceResource, String options) throws IOException {
-        environment = new CLEnvironment(sourceResource, options);
+    public AbstractCLSandbox(CLEnvironment environment) {
+        this.environment = environment;
         Long seed = parseSeed(System.getProperty("seed"));
         random = seed != null ? new Random(seed) : new Random();
     }
@@ -35,20 +35,5 @@ public abstract class AbstractCLSandbox implements AutoCloseable {
     public void close() {
         environment.close();
     }
-    
 
-
-    /**
-     * @see http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-     */
-    public static final int nextPowerOfTwo(int n) {
-        n--;
-        n |= n >> 1;
-        n |= n >> 2;
-        n |= n >> 4;
-        n |= n >> 8;
-        n |= n >> 16;
-        n++;
-        return n;
-    }
 }
