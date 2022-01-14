@@ -4,15 +4,29 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.yah.tools</groupId>
     <artifactId>opencl-support</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
     <name>opencl support</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <lwjgl.version>3.2.3</lwjgl.version>
+        <lwjgl.version>3.3.0</lwjgl.version>
         <checkerframework.version>3.3.0</checkerframework.version>
     </properties>
+
+    <scm>
+        <developerConnection>scm:git:git@github.com:mflament/opencl-support.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub mflmaent Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/mflament/opencl-support</url>
+        </repository>
+    </distributionManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.lwjgl</groupId>
@@ -36,7 +50,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -93,44 +107,6 @@
             <properties>
                 <platform>linux</platform>
             </properties>
-        </profile>
-
-        <profile>
-            <id>checker</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <fork>true</fork>
-                            <staleMillis>1</staleMillis>
-                            <compilerArguments>
-                                <Xmaxerrs>10000</Xmaxerrs>
-                                <Xmaxwarns>10000</Xmaxwarns>
-                            </compilerArguments>
-                            <!-- Without showWarnings and verbose, maven-compiler-plugin may not show output. -->
-                            <showWarnings>true</showWarnings>
-                            <verbose>false</verbose>
-                            <annotationProcessorPaths>
-                                <path>
-                                    <groupId>org.checkerframework</groupId>
-                                    <artifactId>checker</artifactId>
-                                    <version>${checkerframework.version}</version>
-                                </path>
-                            </annotationProcessorPaths>
-                            <annotationProcessors>
-                                <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
-                            </annotationProcessors>
-                            <compilerArgs>
-                                <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
-                                <!-- Optionally, -Awarns turns type-checking errors into warnings. -->
-                                <!-- <arg>-Awarns</arg> -->
-                            </compilerArgs>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
     </profiles>
 </project>
