@@ -1,27 +1,36 @@
 package org.yah.tools.opencl.context;
 
-import static org.lwjgl.opencl.CL10.clCreateContext;
-import static org.lwjgl.opencl.CL10.clReleaseContext;
-
-import java.nio.ByteBuffer;
-import java.util.EnumMap;
-
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryUtil;
 import org.yah.tools.opencl.CLException;
 import org.yah.tools.opencl.CLObject;
+import org.yah.tools.opencl.cmdqueue.CLCommandQueue;
+import org.yah.tools.opencl.enums.BufferProperties;
+import org.yah.tools.opencl.enums.ContextProperty;
+import org.yah.tools.opencl.enums.DeviceType;
+import org.yah.tools.opencl.mem.CLBuffer;
 import org.yah.tools.opencl.platform.CLDevice;
-import org.yah.tools.opencl.platform.CLPlaform;
-import org.yah.tools.opencl.platform.DeviceInfo;
+import org.yah.tools.opencl.platform.CLPlatform;
+import org.yah.tools.opencl.program.CLProgram;
+
+import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Objects;
+
+import static org.lwjgl.opencl.CL10.clCreateContext;
+import static org.lwjgl.opencl.CL10.clReleaseContext;
 
 public class CLContext implements CLObject {
 
-    public static class ContextPropertiesMap extends EnumMap<ContextProperties, Long> {
+    public static class ContextPropertiesMap extends EnumMap<ContextProperty, Long> {
         private static final long serialVersionUID = 1L;
 
         public ContextPropertiesMap() {
-            super(ContextProperties.class);
+            super(ContextProperty.class);
         }
 
         /**
@@ -41,40 +50,93 @@ public class CLContext implements CLObject {
     @FunctionalInterface
     public interface ErrorHandler {
         void onError(String message, ByteBuffer privateInfo);
+
+        ErrorHandler DEFAULT = (message, privateInfo) -> {
+            throw new RuntimeException(message);
+        };
     }
 
     private long id;
-
-    private final long platform;
-
+    private final CLPlatform platform;
+    private final List<CLDevice> devices;
     private final ErrorHandler errorHandler;
 
-    private final PointerBuffer devices;
+    public CLContext() {
+        this(null, null, null, null);
+    }
 
-    public CLContext(long platform,
-            ContextPropertiesMap properties,
-            ErrorHandler errorHandler,
-            long... deviceIds) {
-        this.platform = platform;
-        devices = BufferUtils.createPointerBuffer(deviceIds.length);
-        for (long deviceId : deviceIds) {
-            devices.put(deviceId);
+    public CLContext(@Nullable CLPlatform platform,
+                     @Nullable List<CLDevice> devices,
+                     @Nullable ErrorHandler errorHandler,
+                     @Nullable ContextPropertiesMap properties) {
+        if (platform == null)
+            platform = CLPlatform.getDefaultPlatform();
+        this.platform = Objects.requireNonNull(platform, "platform is null");
+        this.errorHandler = Objects.requireNonNullElse(errorHandler, ErrorHandler.DEFAULT);
+
+        if (devices == null || devices.isEmpty()) {
+            devices = platform.getDevices(DeviceType.DEVICE_TYPE_DEFAULT);
+            if (devices.isEmpty())
+                throw new IllegalStateException("no default devices for platform " + platform);
+        } else {
+            for (CLDevice device : devices) {
+                if (device.getPlatform() != platform)
+                    throw new IllegalArgumentException("Device " + device + " is not from platform " + platform);
+            }
+            devices = List.copyOf(devices);
         }
-        devices.flip();
-        id = CLException.apply(eb -> clCreateContext(properties.toPointerBuffer(), devices,
-                this::onError, 0,
-                eb));
-        this.errorHandler = errorHandler;
+        this.devices = devices;
+
+        ContextPropertiesMap props = new ContextPropertiesMap();
+        if (properties != null)
+            props.putAll(properties);
+        props.put(ContextProperty.CONTEXT_PLATFORM, platform.getId());
+        PointerBuffer propertiesBuffer = props.toPointerBuffer();
+
+        PointerBuffer deviceBuffer = PointerBuffer.allocateDirect(devices.size());
+        this.devices.forEach(device -> deviceBuffer.put(device.getId()));
+        deviceBuffer.flip();
+
+        id = CLException.apply(eb -> clCreateContext(propertiesBuffer, deviceBuffer, this::onError, 0, eb));
     }
 
     @Override
-    public long getId() { return id; }
+    public long getId() {
+        return id;
+    }
 
-    public long getPlatform() { return platform; }
+    public CLPlatform getPlatform() {
+        return platform;
+    }
 
-    public PointerBuffer getDevices() { return devices; }
+    public List<CLDevice> getDevices() {
+        return devices;
+    }
 
-    public long getDevice() { return devices.get(0); }
+    public CLProgram.Builder buildProgram() {
+        return buildProgram(devices);
+    }
+
+    public CLProgram.Builder buildProgram(List<CLDevice> devices) {
+        checkDevices(devices);
+        return CLProgram.builder(this, devices);
+    }
+
+    public CLCommandQueue.Builder buildCommandQueue() {
+        return buildCommandQueue(null);
+    }
+
+    public CLCommandQueue.Builder buildCommandQueue(@Nullable CLDevice device) {
+        if (device != null)
+            checkDevice(device);
+        else
+            device = devices.get(0);
+        return CLCommandQueue.builder(this, device);
+    }
+
+    public CLBuffer.Builder buildBuffer() {
+        return new CLBuffer.Builder(this);
+    }
 
     @Override
     public void close() {
@@ -82,6 +144,15 @@ public class CLContext implements CLObject {
             clReleaseContext(id);
             id = 0;
         }
+    }
+
+    private void checkDevices(List<CLDevice> devices) {
+        devices.forEach(this::checkDevice);
+    }
+
+    private void checkDevice(CLDevice device) {
+        if (!this.devices.contains(device))
+            throw new IllegalArgumentException("device " + device + " is not in context " + id);
     }
 
     private void onError(long errinfo, long private_info, long cb, long user_data) {
@@ -93,37 +164,6 @@ public class CLContext implements CLObject {
             }
             errorHandler.onError(message, infoBuffer);
         }
-    }
-
-    private static CLContext create(long platformId, ErrorHandler errorHandler,
-            long... deviceIds) {
-        ContextPropertiesMap props = new ContextPropertiesMap();
-        props.put(ContextProperties.CONTEXT_PLATFORM, platformId);
-        return new CLContext(platformId, props, errorHandler, deviceIds);
-    }
-
-    public static CLContext fromDevice(long device, ErrorHandler errorHandler) {
-        long platform = CLDevice.readDeviceInfo(device, DeviceInfo.DEVICE_PLATFORM,
-                ByteBuffer::getLong);
-        return create(platform, errorHandler, device);
-    }
-
-    public static CLContext fromPlatform(long platformId, ErrorHandler errorHandler) {
-        CLDevice device = CLDevice.defaultDevice(platformId);
-        if (device == null)
-            throw new IllegalStateException("No default device found for platform");
-        return create(platformId, errorHandler, device.getId());
-    }
-
-    public static CLContext createDefault(ErrorHandler errorHandler) {
-        CLPlaform defaultPlatform = CLPlaform.defaultPlatform();
-        if (defaultPlatform == null)
-            throw new IllegalStateException("No default platform found");
-        CLDevice defaultDevice = defaultPlatform.getDefaultDevice();
-        if (defaultDevice == null)
-            throw new IllegalStateException(
-                    "No default device found for platform " + defaultPlatform.getName());
-        return create(defaultPlatform.getId(), errorHandler, defaultDevice.getId());
     }
 
 }

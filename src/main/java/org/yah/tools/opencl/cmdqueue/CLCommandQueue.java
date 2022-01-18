@@ -1,65 +1,43 @@
 package org.yah.tools.opencl.cmdqueue;
 
-import static org.lwjgl.BufferUtils.createPointerBuffer;
-import static org.lwjgl.opencl.CL10.clCreateCommandQueue;
-import static org.lwjgl.opencl.CL10.clEnqueueNDRangeKernel;
-import static org.lwjgl.opencl.CL10.clEnqueueReadBuffer;
-import static org.lwjgl.opencl.CL10.clEnqueueWriteBuffer;
-import static org.lwjgl.opencl.CL10.clFinish;
-import static org.lwjgl.opencl.CL10.clFlush;
-import static org.lwjgl.opencl.CL10.clReleaseCommandQueue;
-import static org.lwjgl.opencl.CL10.clWaitForEvents;
-import static org.yah.tools.opencl.CLException.check;
-
-import java.math.BigInteger;
-import java.nio.*;
-
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.yah.tools.opencl.CLException;
 import org.yah.tools.opencl.CLObject;
 import org.yah.tools.opencl.context.CLContext;
+import org.yah.tools.opencl.enums.CommandQueueProperty;
 import org.yah.tools.opencl.kernel.CLKernel;
 import org.yah.tools.opencl.mem.CLBuffer;
 import org.yah.tools.opencl.platform.CLDevice;
-import org.yah.tools.opencl.platform.DeviceInfo;
+
+import java.nio.ByteBuffer;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.util.Objects;
+
+import static org.lwjgl.BufferUtils.createPointerBuffer;
+import static org.lwjgl.opencl.CL10.*;
+import static org.yah.tools.opencl.CLException.check;
 
 /**
  * @author Yah
  * @noinspection UnusedReturnValue
  */
 public class CLCommandQueue implements CLObject {
-    private long id;
 
-    private final int maxDimensions;
-    private final BigInteger maxWorkSize;
-    private final long maxWorkGroupSize;
-    private final long[] maxWorkItemSizes;
+    private final CLContext context;
+    private final CLDevice device;
+    private final long id;
 
     /**
      *
      */
-    public CLCommandQueue(CLContext context, long device,
-                          CommandQueueProperties... properties) {
-        id = CLException.apply(eb -> clCreateCommandQueue(context.getId(), device,
-                CommandQueueProperties.combine(properties), eb));
-        int addressBits = CLDevice.readDeviceInfo(device,
-                DeviceInfo.DEVICE_ADDRESS_BITS,
-                ByteBuffer::getInt);
-        maxWorkSize = BigInteger.valueOf(2).pow(addressBits);
-        maxDimensions = CLDevice.readDeviceInfo(device,
-                DeviceInfo.DEVICE_MAX_WORK_ITEM_DIMENSIONS,
-                ByteBuffer::getInt);
-        maxWorkGroupSize = CLDevice.readDeviceInfo(device, DeviceInfo.DEVICE_MAX_WORK_GROUP_SIZE,
-                PointerBuffer::get);
-        maxWorkItemSizes = CLDevice.readDeviceInfo(device, DeviceInfo.DEVICE_MAX_WORK_ITEM_SIZES,
-                b -> {
-                    long[] sizes = new long[maxDimensions];
-                    for (int i = 0; i < maxDimensions; i++) {
-                        sizes[i] = PointerBuffer.get(b);
-                    }
-                    return sizes;
-                });
+    private CLCommandQueue(Builder builder) {
+        this.context = Objects.requireNonNull(builder.context, "context is null");
+        this.device = Objects.requireNonNull(builder.device, "device is null");
+        long clproperties = CommandQueueProperty.all(builder.properties);
+        id = CLException.apply(eb -> clCreateCommandQueue(context.getId(), device.getId(), clproperties, eb));
     }
 
     @Override
@@ -67,21 +45,26 @@ public class CLCommandQueue implements CLObject {
         return id;
     }
 
-    public KernelNDRange createKernelRange() {
-        return new KernelNDRange();
+    public CLContext getContext() {
+        return context;
     }
 
-    public void run(CLKernel kernel, long[] globalWorkSizes) {
-        KernelNDRange range = createKernelRange();
-        range.globalWorkSizes(globalWorkSizes);
-        run(kernel, range);
+    public CLDevice getDevice() {
+        return device;
     }
 
-    public long run(CLKernel kernel, KernelNDRange range) {
-        check(clEnqueueNDRangeKernel(id, kernel.getId(), range.dimensions,
-                range.globalWorkOffsetsBuffer(),
-                range.globalWorkSizesBuffer(),
-                range.localWorkSizesBuffer(),
+    public void run(CLKernel kernel, long[] workgroupSize) {
+        NDRange range = new NDRange(kernel.getMaxDimensions(), workgroupSize);
+        long event = run(kernel, range);
+        range.waitForEvent(event);
+    }
+
+    public long run(CLKernel kernel, NDRange range) {
+        check(clEnqueueNDRangeKernel(id, kernel.getId(),
+                range.getDimensions(),
+                range.globalWorkOffsets(),
+                range.globalWorkSizes(),
+                range.localWorkSizes(),
                 range.getEventWaitListBuffer(),
                 range.getEventBuffer()));
         return range.flushEvent();
@@ -191,10 +174,7 @@ public class CLCommandQueue implements CLObject {
 
     @Override
     public void close() {
-        if (id != 0) {
-            clReleaseCommandQueue(id);
-            id = 0;
-        }
+        clReleaseCommandQueue(id);
     }
 
     public static class EventsParams {
@@ -270,130 +250,28 @@ public class CLCommandQueue implements CLObject {
         }
     }
 
-    public final class KernelNDRange extends EventsParams {
-        private int dimensions;
-        private final PointerBuffer globalWorkSizesBuffer;
-        private PointerBuffer globalWorkOffsetsBuffer;
-
-        private PointerBuffer localWorkSizesBuffer;
-
-        public KernelNDRange() {
-            globalWorkSizesBuffer = createPointerBuffer(maxDimensions);
-        }
-
-        public BigInteger workSize() {
-            return mul(globalWorkSizesBuffer);
-        }
-
-        public int workGroupSize() {
-            return mul(localWorkSizesBuffer).intValue();
-        }
-
-        public KernelNDRange reset(long... sizes) {
-            reset();
-            return globalWorkSizes(sizes);
-        }
-
-        @Override
-        public KernelNDRange reset() {
-            super.reset();
-            dimensions = 0;
-            globalWorkSizesBuffer.limit(0);
-            if (globalWorkOffsetsBuffer != null)
-                globalWorkOffsetsBuffer.limit(0);
-            if (localWorkSizesBuffer != null)
-                localWorkSizesBuffer.limit(0);
-            return this;
-        }
-
-        public PointerBuffer localWorkSizesBuffer() {
-            if (localWorkSizesBuffer != null && localWorkSizesBuffer.hasRemaining())
-                return localWorkSizesBuffer;
-            return null;
-        }
-
-        public KernelNDRange globalWorkSizes(long... sizes) {
-            int dim = sizes.length;
-            if (dim < 1 || dim > maxDimensions)
-                throw new IllegalArgumentException("dim " + dim + " is out of bound [1," + maxDimensions + "]");
-            this.dimensions = dim;
-            globalWorkSizesBuffer
-                    .limit(dim)
-                    .put(sizes)
-                    .flip();
-            if (globalWorkOffsetsBuffer != null)
-                globalWorkOffsetsBuffer.limit(dim);
-            if (localWorkSizesBuffer != null)
-                localWorkSizesBuffer.limit(dim);
-            return this;
-        }
-
-        public KernelNDRange globalWorkOffsets(long... offsets) {
-            checkDimension(offsets.length);
-            if (globalWorkOffsetsBuffer == null) {
-                globalWorkOffsetsBuffer = createPointerBuffer(maxDimensions);
-            }
-            globalWorkOffsetsBuffer.limit(dimensions).put(offsets).flip();
-            return this;
-        }
-
-        public KernelNDRange localWorkSizes(long... sizes) {
-            checkDimension(sizes.length);
-            if (localWorkSizesBuffer == null) {
-                localWorkSizesBuffer = createPointerBuffer(maxDimensions);
-            }
-            localWorkSizesBuffer.limit(dimensions).put(sizes).flip();
-            return this;
-        }
-
-        public KernelNDRange validate() {
-            if (workSize().compareTo(maxWorkSize) > 0)
-                throw new IllegalArgumentException(
-                        String.format("Invalid workSize %d, max %d", workSize(), maxWorkSize));
-
-            if (localWorkSizesBuffer != null) {
-                long total = 1;
-                for (int d = 0; d < localWorkSizesBuffer.remaining(); d++) {
-                    long size = localWorkSizesBuffer.get(d);
-                    if (size > maxWorkItemSizes[d]) {
-                        throw new IllegalArgumentException(
-                                String.format("Invalid localWorkSize[%d]=%d, max %d", d, size, maxWorkItemSizes[d]));
-                    }
-                    total *= size;
-                }
-
-                if (total > maxWorkGroupSize) {
-                    throw new IllegalArgumentException(
-                            String.format("Invalid total work group size %d, max %d", total,
-                                    maxWorkGroupSize));
-                }
-            }
-            return this;
-        }
-
-        private void checkDimension(int dim) {
-            if (dim > dimensions)
-                throw new IllegalArgumentException("dim " + dim + " is out of bound [0," + dimensions + "[");
-        }
-
-        PointerBuffer globalWorkSizesBuffer() {
-            return globalWorkSizesBuffer;
-        }
-
-        PointerBuffer globalWorkOffsetsBuffer() {
-            if (globalWorkOffsetsBuffer != null && globalWorkOffsetsBuffer.hasRemaining())
-                return globalWorkOffsetsBuffer;
-            return null;
-        }
-
+    public static Builder builder(CLContext context, CLDevice device) {
+        return new Builder(context, device);
     }
 
-    private static BigInteger mul(PointerBuffer buffer) {
-        BigInteger res = BigInteger.valueOf(0);
-        for (int i = 0; i < buffer.remaining(); i++) {
-            res = res.add(BigInteger.valueOf(buffer.get(i)));
-        }
-        return res;
-    }
+    public static class Builder {
+        private final CLContext context;
+        private final CLDevice device;
+        private CommandQueueProperty[] properties = {};
 
+        private Builder(CLContext context, CLDevice device) {
+            this.context = context;
+            this.device = device;
+        }
+
+
+        public Builder withProperties(CommandQueueProperty... properties) {
+            this.properties = properties;
+            return this;
+        }
+
+        public CLCommandQueue build() {
+            return new CLCommandQueue(this);
+        }
+    }
 }

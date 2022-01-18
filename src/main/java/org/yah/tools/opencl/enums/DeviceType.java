@@ -1,14 +1,9 @@
-package org.yah.tools.opencl.platform;
+package org.yah.tools.opencl.enums;
 
-import static org.lwjgl.opencl.CL10.CL_DEVICE_TYPE_ACCELERATOR;
-import static org.lwjgl.opencl.CL10.CL_DEVICE_TYPE_ALL;
-import static org.lwjgl.opencl.CL10.CL_DEVICE_TYPE_CPU;
-import static org.lwjgl.opencl.CL10.CL_DEVICE_TYPE_DEFAULT;
-import static org.lwjgl.opencl.CL10.CL_DEVICE_TYPE_GPU;
-import static org.lwjgl.opencl.CL12.CL_DEVICE_TYPE_CUSTOM;
-
-import org.yah.tools.opencl.CLEnum;
 import org.yah.tools.opencl.CLVersion;
+
+import static org.lwjgl.opencl.CL10.*;
+import static org.lwjgl.opencl.CL12.CL_DEVICE_TYPE_CUSTOM;
 
 public enum DeviceType implements CLEnum {
     DEVICE_TYPE_DEFAULT(CL_DEVICE_TYPE_DEFAULT, CLVersion.CL10),

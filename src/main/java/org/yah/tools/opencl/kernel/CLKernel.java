@@ -1,24 +1,36 @@
 package org.yah.tools.opencl.kernel;
 
 import org.lwjgl.BufferUtils;
+import org.yah.tools.opencl.CLException;
 import org.yah.tools.opencl.CLObject;
+import org.yah.tools.opencl.enums.deviceinfo.DeviceInfo;
 import org.yah.tools.opencl.mem.CLMemObject;
+import org.yah.tools.opencl.platform.CLDevice;
 import org.yah.tools.opencl.program.CLProgram;
 
 import java.nio.*;
+import java.util.List;
+import java.util.Objects;
 
 import static org.lwjgl.opencl.CL10.*;
-import static org.yah.tools.opencl.CLException.apply;
 import static org.yah.tools.opencl.CLException.check;
 
 public class CLKernel implements CLObject {
 
-    private long id;
+    private final CLProgram program;
+    private final long id;
+    private final int maxDimensions;
 
     private static final ThreadLocal<ByteBuffer> argBuffer = ThreadLocal.withInitial(() -> BufferUtils.createByteBuffer(8));
 
     public CLKernel(CLProgram program, String name) {
-        id = apply(eb -> clCreateKernel(program.getId(), name, eb));
+        this.program = Objects.requireNonNull(program, "program is null");
+        id = CLException.apply(eb -> clCreateKernel(program.getId(), name, eb));
+        maxDimensions = (int) getDevices()
+                .stream()
+                .mapToInt(device -> device.getDeviceInfo(DeviceInfo.DEVICE_MAX_WORK_ITEM_DIMENSIONS))
+                .min()
+                .orElse(0);
     }
 
     @Override
@@ -26,12 +38,21 @@ public class CLKernel implements CLObject {
         return id;
     }
 
+    public CLProgram getProgram() {
+        return program;
+    }
+
+    public List<CLDevice> getDevices() {
+        return program.getDevices();
+    }
+
+    public int getMaxDimensions() {
+        return maxDimensions;
+    }
+
     @Override
     public void close() {
-        if (id != 0) {
-            clReleaseKernel(id);
-            id = 0;
-        }
+        clReleaseKernel(id);
     }
 
     public void setArg(int index, ByteBuffer buffer) {

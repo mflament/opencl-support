@@ -1,4 +1,4 @@
-package org.yah.tools.opencl.context;
+package org.yah.tools.opencl.enums;
 
 import static org.lwjgl.opencl.CL10.CL_CONTEXT_PLATFORM;
 import static org.lwjgl.opencl.CL12.CL_CONTEXT_INTEROP_USER_SYNC;
@@ -9,14 +9,13 @@ import static org.lwjgl.opencl.KHRGLSharing.CL_GL_CONTEXT_KHR;
 import static org.lwjgl.opencl.KHRGLSharing.CL_WGL_HDC_KHR;
 
 import org.lwjgl.opencl.CLCapabilities;
-import org.yah.tools.opencl.CLEnum;
 import org.yah.tools.opencl.CLVersion;
 
 /**
  * @author Yah
  *
  */
-public enum ContextProperties implements CLEnum {
+public enum ContextProperty implements CLEnum {
 
     CONTEXT_PLATFORM(CL_CONTEXT_PLATFORM, CLVersion.CL10),
     CONTEXT_INTEROP_USER_SYNC(CL_CONTEXT_INTEROP_USER_SYNC, CLVersion.CL12),
@@ -30,7 +29,7 @@ public enum ContextProperties implements CLEnum {
     private final int id;
     private final CLVersion version;
 
-    ContextProperties(int id, CLVersion version) {
+    ContextProperty(int id, CLVersion version) {
         this.id = id;
         this.version = version;
     }

@@ -1,4 +1,4 @@
-package org.yah.tools.opencl.mem;
+package org.yah.tools.opencl.enums;
 
 import static org.lwjgl.opencl.CL10.CL_MEM_ALLOC_HOST_PTR;
 import static org.lwjgl.opencl.CL10.CL_MEM_COPY_HOST_PTR;
@@ -13,7 +13,6 @@ import static org.lwjgl.opencl.CL12.CL_MEM_HOST_WRITE_ONLY;
 import java.util.EnumSet;
 import java.util.Set;
 
-import org.yah.tools.opencl.CLEnum;
 import org.yah.tools.opencl.CLVersion;
 
 public enum BufferProperties implements CLEnum {

@@ -1,21 +1,18 @@
-package org.yah.tools.opencl.cmdqueue;
+package org.yah.tools.opencl.enums;
+
+import org.yah.tools.opencl.CLVersion;
 
 import static org.lwjgl.opencl.CL10.CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 import static org.lwjgl.opencl.CL10.CL_QUEUE_PROFILING_ENABLE;
 
-import java.util.EnumSet;
-import java.util.Set;
+public enum CommandQueueProperty implements CLEnum {
 
-import org.yah.tools.opencl.CLEnum;
-import org.yah.tools.opencl.CLVersion;
-
-public enum CommandQueueProperties implements CLEnum {
     QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE),
     QUEUE_PROFILING_ENABLE(CL_QUEUE_PROFILING_ENABLE);
 
     private final int id;
 
-    CommandQueueProperties(int id) {
+    CommandQueueProperty(int id) {
         this.id = id;
     }
 
@@ -29,15 +26,12 @@ public enum CommandQueueProperties implements CLEnum {
         return CLVersion.CL10;
     }
 
-    public static long combine(CommandQueueProperties... props) {
+    public static long all(CommandQueueProperty... props) {
         long res = 0;
-        for (CommandQueueProperties p : props) {
+        for (CommandQueueProperty p : props) {
             res |= p.id;
         }
         return res;
     }
 
-    public static Set<CommandQueueProperties> setOf(CommandQueueProperties prop, CommandQueueProperties... props) {
-        return EnumSet.of(prop, props);
-    }
 }

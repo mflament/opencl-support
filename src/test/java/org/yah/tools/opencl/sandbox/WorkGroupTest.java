@@ -2,7 +2,7 @@ package org.yah.tools.opencl.sandbox;
 
 import java.io.IOException;
 
-import org.yah.tools.opencl.cmdqueue.CLCommandQueue.KernelNDRange;
+import org.yah.tools.opencl.cmdqueue.NDRange;
 import org.yah.tools.opencl.kernel.CLKernel;
 
 public class WorkGroupTest extends AbstractCLSandbox {
@@ -12,13 +12,12 @@ public class WorkGroupTest extends AbstractCLSandbox {
     }
 
     public void run() {
-        CLKernel kernel = environment.kernel("wgtest");
-        KernelNDRange range = environment.kernelRange();
-        range.globalWorkSizes(4, 4);
-        range.localWorkSizes(2, 2);
-        //range.validate();
-        environment.run(kernel, range);
-        environment.finish();
+        CLKernel kernel = program.kernel("wgtest");
+        NDRange range = new NDRange(kernel.getMaxDimensions());
+        range.set(new long[]{ 32 }, new long[]{ 4 });
+        range.validate(kernel.getProgram().getDevices());
+        commandQueue.run(kernel, range);
+        commandQueue.finish();
     }
 
     public static void main(String[] args) throws IOException {

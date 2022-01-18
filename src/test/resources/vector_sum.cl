@@ -1,9 +1,7 @@
-typedef TYPE T;
-
-kernel void sum(global const T* values, 
-                global T* results, 
+kernel void sum(global const float* values,
+                global float* results,
                 int const size,
-                local T* partialSums) {
+                local float* partialSums) {
   int gid = get_global_id(0);
   int lid = get_local_id(0);
   int valueIndex = gid << 1;

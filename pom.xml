@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.yah.tools</groupId>
     <artifactId>opencl-support</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.3</version>
     <name>opencl support</name>
 
     <properties>
@@ -45,6 +45,12 @@
             <groupId>org.lwjgl</groupId>
             <artifactId>lwjgl-opencl</artifactId>
             <version>${lwjgl.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
         </dependency>
 
         <dependency>

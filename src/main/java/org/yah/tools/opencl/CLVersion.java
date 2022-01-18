@@ -10,7 +10,7 @@ public enum CLVersion {
     CL21,
     CL22;
 
-    boolean available(CLCapabilities capabilities) {
+    public boolean available(CLCapabilities capabilities) {
         switch (this) {
         case CL10:
             return capabilities.OpenCL10;

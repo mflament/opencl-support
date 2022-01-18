@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.yah.tools.opencl.enums.BufferProperties;
 
 /**
  * @author Yah
