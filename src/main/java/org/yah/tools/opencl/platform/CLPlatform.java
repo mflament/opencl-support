@@ -6,6 +6,8 @@ import org.lwjgl.opencl.CL;
 import org.lwjgl.opencl.CL10;
 import org.lwjgl.opencl.CLCapabilities;
 import org.lwjgl.system.MemoryStack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yah.tools.opencl.enums.DeviceType;
 import org.yah.tools.opencl.enums.deviceinfo.DeviceInfo;
 import org.yah.tools.opencl.enums.platforminfo.PlatformInfo;
@@ -22,6 +24,8 @@ import static org.lwjgl.opencl.CL10.*;
 import static org.yah.tools.opencl.CLException.check;
 
 public class CLPlatform {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CLPlatform.class);
 
     private List<CLDevice> devices;
 
@@ -89,7 +93,11 @@ public class CLPlatform {
             check(clGetDeviceIDs(id, CL_DEVICE_TYPE_ALL, deviceIds, numDevices));
             devices = new ArrayList<>(numDevices[0]);
             for (int i = 0; i < numDevices[0]; i++) {
-                devices.add(new CLDevice(this, deviceIds.get(i)));
+                try {
+                    devices.add(new CLDevice(this, deviceIds.get(i)));
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    LOGGER.error("Invalid device count " + numDevices[0] + ", devices ids count " + deviceIds.remaining() + " for platform " + name);
+                }
             }
         }
         return devices;
