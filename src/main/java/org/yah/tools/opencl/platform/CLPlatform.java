@@ -95,7 +95,7 @@ public class CLPlatform {
             for (int i = 0; i < numDevices[0]; i++) {
                 try {
                     devices.add(new CLDevice(this, deviceIds.get(i)));
-                } catch (ArrayIndexOutOfBoundsException e) {
+                } catch (IndexOutOfBoundsException e) {
                     LOGGER.error("Invalid device count " + numDevices[0] + ", devices ids count " + deviceIds.remaining() + " for platform " + name);
                 }
             }
