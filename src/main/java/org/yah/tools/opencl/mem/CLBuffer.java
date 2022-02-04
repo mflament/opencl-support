@@ -51,27 +51,27 @@ public class CLBuffer implements CLMemObject {
         }
 
         public CLBuffer build(int size) {
-            var id = CLException.apply(eb -> clCreateBuffer(context.getId(), properties, size, eb));
+            long id = CLException.apply(eb -> clCreateBuffer(context.getId(), properties, size, eb));
             return new CLBuffer(id);
         }
 
         public CLBuffer build(ByteBuffer hostBuffer) {
-            var id = CLException.apply(eb -> clCreateBuffer(context.getId(), properties, hostBuffer, eb));
+            long id = CLException.apply(eb -> clCreateBuffer(context.getId(), properties, hostBuffer, eb));
             return new CLBuffer(id);
         }
 
         public CLBuffer build(IntBuffer hostBuffer) {
-            var id = CLException.apply(eb -> clCreateBuffer(context.getId(), properties, hostBuffer, eb));
+            long id = CLException.apply(eb -> clCreateBuffer(context.getId(), properties, hostBuffer, eb));
             return new CLBuffer(id);
         }
 
         public CLBuffer build(FloatBuffer hostBuffer) {
-            var id = CLException.apply(eb -> clCreateBuffer(context.getId(), properties, hostBuffer, eb));
+            long id = CLException.apply(eb -> clCreateBuffer(context.getId(), properties, hostBuffer, eb));
             return new CLBuffer(id);
         }
 
         public CLBuffer build(DoubleBuffer hostBuffer) {
-            var id = CLException.apply(eb -> clCreateBuffer(context.getId(), properties, hostBuffer, eb));
+            long id = CLException.apply(eb -> clCreateBuffer(context.getId(), properties, hostBuffer, eb));
             return new CLBuffer(id);
         }
     }

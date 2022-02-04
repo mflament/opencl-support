@@ -141,7 +141,7 @@ public class CLPlatform {
         devices.forEach(d -> {
             printer.println("\t  - ", d.getName());
             for (DeviceInfo deviceInfo : deviceInfos) {
-                var value = d.getDeviceInfo(deviceInfo);
+                Object value = d.getDeviceInfo(deviceInfo);
                 String text;
                 if (value.getClass().isArray()) {
                     int length = Array.getLength(value);

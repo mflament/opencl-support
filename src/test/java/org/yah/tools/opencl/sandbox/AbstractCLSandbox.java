@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +53,7 @@ public abstract class AbstractCLSandbox implements AutoCloseable {
     private static final int RUNS = 50;
 
     protected static BenchmarkResult benchmark(BenchmarkTask task) {
-        try (task) {
+        try (BenchmarkTask bt = task) {
             return benchmark((Runnable) task);
         }
     }
@@ -106,6 +107,7 @@ public abstract class AbstractCLSandbox implements AutoCloseable {
         return parallelFor(0, count, threads, task);
     }
 
+    @SuppressWarnings("SameParameterValue")
     protected static boolean parallelFor(int start, int end, int threads, ParallelTask task) {
         if (threads <= 0)
             throw new IllegalArgumentException("invalid threads " + threads);
@@ -116,8 +118,8 @@ public abstract class AbstractCLSandbox implements AutoCloseable {
 
         threads = Math.min(threads, count);
         int chunk = count / threads;
-        var runnables = new ArrayList<Runnable>(threads);
-        var latch = new CountDownLatch(threads - 1);
+        List<Runnable> runnables = new ArrayList<>(threads);
+        CountDownLatch latch = new CountDownLatch(threads - 1);
         for (int i = 0; i < threads - 1; i++) {
             int index = i;
             int threadStart = start + i * chunk;

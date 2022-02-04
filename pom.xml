@@ -4,17 +4,17 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.yah.tools</groupId>
     <artifactId>opencl-support</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>opencl support</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>15</maven.compiler.source>
-        <maven.compiler.target>15</maven.compiler.target>
-        <maven.compiler.release>15</maven.compiler.release>
-        <lwjgl.version>3.3.0</lwjgl.version>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.release>8</maven.compiler.release>
         <checkerframework.version>3.3.0</checkerframework.version>
+        <lwjgl.version>3.3.0</lwjgl.version>
     </properties>
 
     <scm>
@@ -25,45 +25,28 @@
     <distributionManagement>
         <repository>
             <id>github</id>
-            <name>GitHub mflmaent Apache Maven Packages</name>
+            <name>GitHub mflament Apache Maven Packages</name>
             <url>https://maven.pkg.github.com/mflament/opencl-support</url>
         </repository>
     </distributionManagement>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.yah.lwjgl</groupId>
+                <artifactId>lwjgl-bom</artifactId>
+                <version>${lwjgl.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
-
         <dependency>
-            <groupId>org.lwjgl</groupId>
-            <artifactId>lwjgl-opencl</artifactId>
-            <version>${lwjgl.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.lwjgl</groupId>
-            <artifactId>lwjgl</artifactId>
-            <version>${lwjgl.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.lwjgl</groupId>
-            <artifactId>lwjgl</artifactId>
-            <version>${lwjgl.version}</version>
-            <classifier>natives-windows</classifier>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.lwjgl</groupId>
-            <artifactId>lwjgl</artifactId>
-            <version>${lwjgl.version}</version>
-            <classifier>natives-linux</classifier>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.lwjgl</groupId>
-            <artifactId>lwjgl</artifactId>
-            <version>${lwjgl.version}</version>
-            <classifier>natives-macos</classifier>
-            <scope>runtime</scope>
+            <groupId>org.yah.lwjgl</groupId>
+            <artifactId>opencl</artifactId>
+            <type>pom</type>
         </dependency>
 
         <dependency>
@@ -75,7 +58,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.33</version>
+            <version>1.7.35</version>
         </dependency>
 
         <dependency>
@@ -93,6 +76,13 @@
         </dependency>
     </dependencies>
 
+    <repositories>
+        <repository>
+            <id>github</id>
+            <name>lwjgl-bom repository</name>
+            <url>https://maven.pkg.github.com/mflament/lwjgl-bom</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>
@@ -111,43 +101,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>windows</id>
-            <activation>
-                <os>
-                    <family>windows</family>
-                </os>
-            </activation>
-            <properties>
-                <platform>windows</platform>
-            </properties>
-        </profile>
-
-        <profile>
-            <id>linux</id>
-            <activation>
-                <os>
-                    <family>linux</family>
-                </os>
-            </activation>
-            <properties>
-                <platform>linux</platform>
-            </properties>
-        </profile>
-
-        <profile>
-            <id>macos</id>
-            <activation>
-                <os>
-                    <family>macos</family>
-                </os>
-            </activation>
-            <properties>
-                <platform>macos</platform>
-            </properties>
-        </profile>
-    </profiles>
 
 </project>
