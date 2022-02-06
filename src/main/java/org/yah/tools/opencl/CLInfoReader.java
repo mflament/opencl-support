@@ -1,32 +1,34 @@
-package org.yah.tools.opencl.enums;
+package org.yah.tools.opencl;
 
+import org.yah.tools.opencl.enums.CLEnum;
+import org.yah.tools.opencl.enums.CLEnumSet;
 import org.yah.tools.opencl.platform.CLDevice;
 
 import java.nio.ByteBuffer;
 
 @FunctionalInterface
-public interface CLInfoReader extends CLDeviceInfoReader {
+public interface CLInfoReader<T> extends CLDeviceInfoReader<T> {
 
-    Object read(ByteBuffer buffer);
+    T read(ByteBuffer buffer);
 
     @Override
-    default Object read(CLDevice device, ByteBuffer buffer) {
+    default T read(CLDevice device, ByteBuffer buffer) {
         return read(buffer);
     }
 
-    static CLInfoReader cl_uint() {
+    static CLInfoReader<Integer> cl_uint() {
         return ByteBuffer::getInt;
     }
 
-    static CLInfoReader cl_long() {
+    static CLInfoReader<Long> cl_long() {
         return ByteBuffer::getLong;
     }
 
-    static CLInfoReader cl_bool() {
+    static CLInfoReader<Boolean> cl_bool() {
         return buffer -> buffer.getInt() != 0;
     }
 
-    static CLInfoReader cl_string() {
+    static CLInfoReader<String> cl_string() {
         StringBuilder sb = new StringBuilder();
         return buffer -> {
             while (buffer.hasRemaining()) {
@@ -39,7 +41,7 @@ public interface CLInfoReader extends CLDeviceInfoReader {
         };
     }
 
-    static <T extends Enum<T> & CLEnum> CLInfoReader cl_enum(Class<T> enumType) {
+    static <T extends Enum<T> & CLEnum> CLInfoReader<T> cl_enum(Class<T> enumType) {
         T[] values = enumType.getEnumConstants();
         return buffer -> {
             int id = buffer.getInt();
@@ -47,7 +49,7 @@ public interface CLInfoReader extends CLDeviceInfoReader {
         };
     }
 
-    static <T extends Enum<T> & CLEnum> CLInfoReader cl_bitfield(Class<T> enumType) {
+    static <T extends Enum<T> & CLEnum> CLInfoReader<CLEnumSet<T>> cl_bitfield(Class<T> enumType) {
         T[] values = enumType.getEnumConstants();
         return buffer -> {
             int id = buffer.getInt();

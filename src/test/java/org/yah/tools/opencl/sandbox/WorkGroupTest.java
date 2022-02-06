@@ -13,9 +13,9 @@ public class WorkGroupTest extends AbstractCLSandbox {
 
     public void run() {
         CLKernel kernel = program.kernel("wgtest");
-        NDRange range = new NDRange(kernel.getMaxDimensions());
-        range.set(new long[]{ 32 }, new long[]{ 4 });
-        range.validate(kernel.getProgram().getDevices());
+        NDRange range = new NDRange(1);
+        range.globalWorkSize(16).localWorkSize(4);
+        range.validate(program.getDevices());
         commandQueue.run(kernel, range);
         commandQueue.finish();
     }

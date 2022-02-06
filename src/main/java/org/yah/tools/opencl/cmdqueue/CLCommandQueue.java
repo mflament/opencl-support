@@ -53,18 +53,12 @@ public class CLCommandQueue implements CLObject {
         return device;
     }
 
-    public void run(CLKernel kernel, long[] workgroupSize) {
-        NDRange range = new NDRange(kernel.getMaxDimensions(), workgroupSize);
-        long event = run(kernel, range);
-        range.waitForEvent(event);
-    }
-
     public long run(CLKernel kernel, NDRange range) {
         check(clEnqueueNDRangeKernel(id, kernel.getId(),
                 range.getDimensions(),
-                range.globalWorkOffsets(),
-                range.globalWorkSizes(),
-                range.localWorkSizes(),
+                range.getGlobalWorkOffsetsBuffer(),
+                range.getGlobalWorkSizesBuffer(),
+                range.getLocalWorkSizesBuffer(),
                 range.getEventWaitListBuffer(),
                 range.getEventBuffer()));
         return range.flushEvent();

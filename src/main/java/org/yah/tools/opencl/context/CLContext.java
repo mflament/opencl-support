@@ -5,8 +5,8 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryUtil;
 import org.yah.tools.opencl.CLException;
 import org.yah.tools.opencl.CLObject;
+import org.yah.tools.opencl.CLUtils;
 import org.yah.tools.opencl.cmdqueue.CLCommandQueue;
-import org.yah.tools.opencl.enums.BufferProperties;
 import org.yah.tools.opencl.enums.ContextProperty;
 import org.yah.tools.opencl.enums.DeviceType;
 import org.yah.tools.opencl.mem.CLBuffer;
@@ -16,7 +16,6 @@ import org.yah.tools.opencl.program.CLProgram;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Objects;
@@ -72,7 +71,7 @@ public class CLContext implements CLObject {
         if (platform == null)
             platform = CLPlatform.getDefaultPlatform();
         this.platform = Objects.requireNonNull(platform, "platform is null");
-        this.errorHandler = Objects.requireNonNullElse(errorHandler, ErrorHandler.DEFAULT);
+        this.errorHandler = errorHandler == null ? ErrorHandler.DEFAULT : errorHandler;
 
         if (devices == null || devices.isEmpty()) {
             devices = platform.getDevices(DeviceType.DEVICE_TYPE_DEFAULT);
@@ -83,7 +82,7 @@ public class CLContext implements CLObject {
                 if (device.getPlatform() != platform)
                     throw new IllegalArgumentException("Device " + device + " is not from platform " + platform);
             }
-            devices = List.copyOf(devices);
+            devices = CLUtils.copyOf(devices);
         }
         this.devices = devices;
 

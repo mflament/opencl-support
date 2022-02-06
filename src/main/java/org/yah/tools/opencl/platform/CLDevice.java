@@ -8,6 +8,8 @@ import org.yah.tools.opencl.enums.deviceinfo.DeviceInfo;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.nio.LongBuffer;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -25,7 +27,7 @@ public class CLDevice {
     private final String name;
     private final DeviceAddressBits addressBits;
 
-    private final ConcurrentMap<DeviceInfo, Object> infosCache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<DeviceInfo<?>, Object> infosCache = new ConcurrentHashMap<>();
 
     private final ByteBuffer infoBuffer = BufferUtils.createByteBuffer(8 * 1024);
 
@@ -53,11 +55,11 @@ public class CLDevice {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T getDeviceInfo(DeviceInfo info) {
+    public <T> T getDeviceInfo(DeviceInfo<T> info) {
         return (T) infosCache.computeIfAbsent(info, this::readDeviceInfo);
     }
 
-    private synchronized Object readDeviceInfo(DeviceInfo info) {
+    private synchronized <T> T readDeviceInfo(DeviceInfo<T> info) {
         infoBuffer.clear();
         try (MemoryStack stack = MemoryStack.stackPush()) {
             PointerBuffer sizeBuffer = stack.mallocPointer(1);
@@ -78,4 +80,29 @@ public class CLDevice {
         return name;
     }
 
+    public String printDeviceInfo() {
+        StringBuilder sb = new StringBuilder();
+        String lineSeparator = System.lineSeparator();
+        sb.append("Platform : ").append(getPlatform().getName()).append(lineSeparator);
+        sb.append("Device : ").append(getName()).append(lineSeparator);
+        DeviceInfo.DEVICE_INFOS.forEach(info -> {
+            Object deviceInfo = getDeviceInfo(info);
+            if (deviceInfo instanceof LongBuffer)
+                deviceInfo = printBuffer((LongBuffer) deviceInfo);
+            else
+                deviceInfo = Objects.toString(deviceInfo);
+            sb.append("  ").append(info.name()).append(" = ").append(deviceInfo).append(lineSeparator);
+        });
+        return sb.toString();
+    }
+
+
+    private static String printBuffer(LongBuffer buffer) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < buffer.limit(); i++) {
+            if (i > 0) sb.append(" ");
+            sb.append(buffer.get(i));
+        }
+        return sb.toString();
+    }
 }

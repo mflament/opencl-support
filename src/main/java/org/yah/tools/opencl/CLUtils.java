@@ -1,5 +1,10 @@
 package org.yah.tools.opencl;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 public final class CLUtils {
 
     private CLUtils() {}
@@ -18,4 +23,7 @@ public final class CLUtils {
         return n;
     }
 
+    public static <T> List<T> copyOf(Collection<T> from) {
+        return Collections.unmodifiableList(new ArrayList<>(from));
+    }
 }

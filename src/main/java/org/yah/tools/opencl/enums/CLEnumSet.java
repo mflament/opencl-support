@@ -9,9 +9,9 @@ public class CLEnumSet<T extends CLEnum> {
 
     public CLEnumSet(int value, T[] enums) {
         this.value = value;
-        this.values = Arrays.stream(enums)
+        this.values = Collections.unmodifiableSet(Arrays.stream(enums)
                 .filter(e -> (value & e.id()) != 0)
-                .collect(Collectors.toUnmodifiableSet());
+                .collect(Collectors.toSet()));
     }
 
     public int getValue() {
@@ -19,7 +19,7 @@ public class CLEnumSet<T extends CLEnum> {
     }
 
     public Set<T> values() {
-       return values;
+        return values;
     }
 
     @Override

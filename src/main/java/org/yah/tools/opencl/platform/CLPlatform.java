@@ -12,13 +12,13 @@ import org.yah.tools.opencl.enums.DeviceType;
 import org.yah.tools.opencl.enums.deviceinfo.DeviceInfo;
 import org.yah.tools.opencl.enums.platforminfo.PlatformInfo;
 
-import java.lang.reflect.Array;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static org.lwjgl.opencl.CL10.*;
 import static org.yah.tools.opencl.CLException.check;
@@ -135,23 +135,14 @@ public class CLPlatform {
             printer.println("\thost_timer_res:    " + readPlatformInfo(PlatformInfo.PLATFORM_HOST_TIMER_RESOLUTION, buffer));
         printer.println("\tdevices:");
         List<CLDevice> devices = getDevices(DeviceType.DEVICE_TYPE_ALL);
-        List<DeviceInfo> deviceInfos = Arrays.stream(DeviceInfo.values())
+        List<DeviceInfo<?>> deviceInfos = DeviceInfo.DEVICE_INFOS.stream()
                 .filter(i -> i.available(capabilities))
                 .collect(Collectors.toList());
         devices.forEach(d -> {
             printer.println("\t  - ", d.getName());
-            for (DeviceInfo deviceInfo : deviceInfos) {
+            for (DeviceInfo<?> deviceInfo : deviceInfos) {
                 Object value = d.getDeviceInfo(deviceInfo);
-                String text;
-                if (value.getClass().isArray()) {
-                    int length = Array.getLength(value);
-                    text = IntStream.range(0, Array.getLength(value))
-                            .mapToObj(i -> Objects.toString(Array.get(value, i)))
-                            .collect(Collectors.joining(", "));
-                } else {
-                    text = value.toString();
-                }
-                printer.println("\t\t", deviceInfo.name(), "=", text);
+                printer.println("\t\t", deviceInfo.name(), "=", value);
             }
         });
         return sb.toString();

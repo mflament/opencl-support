@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.yah.tools</groupId>
     <artifactId>opencl-support</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <name>opencl support</name>
 
     <properties>
@@ -14,7 +14,7 @@
         <maven.compiler.target>8</maven.compiler.target>
         <maven.compiler.release>8</maven.compiler.release>
         <checkerframework.version>3.3.0</checkerframework.version>
-        <lwjgl.version>3.3.0</lwjgl.version>
+        <lwjgl-bom.version>3.3.0-SNAPSHOT</lwjgl-bom.version>
     </properties>
 
     <scm>
@@ -24,7 +24,7 @@
 
     <distributionManagement>
         <repository>
-            <id>github</id>
+            <id>opencl-support</id>
             <name>GitHub mflament Apache Maven Packages</name>
             <url>https://maven.pkg.github.com/mflament/opencl-support</url>
         </repository>
@@ -35,7 +35,7 @@
             <dependency>
                 <groupId>org.yah.lwjgl</groupId>
                 <artifactId>lwjgl-bom</artifactId>
-                <version>${lwjgl.version}</version>
+                <version>${lwjgl-bom.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -45,8 +45,11 @@
     <dependencies>
         <dependency>
             <groupId>org.yah.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.yah.lwjgl</groupId>
             <artifactId>opencl</artifactId>
-            <type>pom</type>
         </dependency>
 
         <dependency>

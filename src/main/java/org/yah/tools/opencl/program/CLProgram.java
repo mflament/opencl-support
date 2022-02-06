@@ -5,7 +5,9 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.yah.tools.opencl.CLException;
 import org.yah.tools.opencl.CLObject;
+import org.yah.tools.opencl.CLUtils;
 import org.yah.tools.opencl.context.CLContext;
+import org.yah.tools.opencl.enums.deviceinfo.DeviceInfo;
 import org.yah.tools.opencl.kernel.CLKernel;
 import org.yah.tools.opencl.platform.CLDevice;
 import org.yah.tools.opencl.platform.CLPlatform;
@@ -17,10 +19,8 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -44,6 +44,13 @@ public class CLProgram implements CLObject {
 
     public List<CLDevice> getDevices() {
         return devices;
+    }
+
+    public int getMaxDimensions() {
+        return devices.stream()
+                .mapToInt(device -> device.getDeviceInfo(DeviceInfo.DEVICE_MAX_WORK_ITEM_DIMENSIONS))
+                .min()
+                .orElse(0);
     }
 
     public CLKernel kernel(String name) {
@@ -84,7 +91,7 @@ public class CLProgram implements CLObject {
 
         public Builder(CLContext context, List<CLDevice> devices) {
             this.context = Objects.requireNonNull(context, "context is null");
-            this.devices = List.copyOf(Objects.requireNonNull(devices, "devices is null"));
+            this.devices = CLUtils.copyOf(Objects.requireNonNull(devices, "devices is null"));
         }
 
         public Builder withOptions(String options) {
@@ -106,7 +113,7 @@ public class CLProgram implements CLObject {
             if (sources.isEmpty())
                 throw new IllegalStateException("No sources");
 
-            long id = apply(eb -> clCreateProgramWithSource(context.getId(), sources.toArray(String[]::new), eb));
+            long id = apply(eb -> clCreateProgramWithSource(context.getId(), sources.toArray(new String[0]), eb));
             PointerBuffer device_list = PointerBuffer.allocateDirect(devices.size());
             for (CLDevice device : devices)
                 device_list.put(device.getId());
@@ -140,22 +147,28 @@ public class CLProgram implements CLObject {
         }
 
         private String loadSource(String file) throws IOException {
+            byte[] buffer = new byte[4 * 1024];
+            StringBuilder sb = new StringBuilder();
             try (InputStream is = openStream(file)) {
-                return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                int l;
+                while ((l = is.read(buffer)) >= 0) {
+                    sb.append(new String(buffer, 0, l, StandardCharsets.UTF_8));
+                }
             }
+            return sb.toString();
         }
 
         private static final String CLASSPATH_PREFIX = "classpath:";
 
         private static InputStream openStream(String file) throws IOException {
-            if  (file.startsWith(CLASSPATH_PREFIX)) {
+            if (file.startsWith(CLASSPATH_PREFIX)) {
                 String resource = file.substring(CLASSPATH_PREFIX.length());
                 URL url = CLPlatform.class.getClassLoader().getResource(resource);
                 if (url == null)
                     throw new FileNotFoundException("Classpath resource " + resource + " was not found");
                 return url.openStream();
             } else {
-                return Files.newInputStream(Path.of(file));
+                return Files.newInputStream(Paths.get(file));
             }
         }
     }

@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.nio.FloatBuffer;
 
 import static org.yah.tools.opencl.enums.BufferProperties.*;
-import static org.yah.tools.opencl.enums.BufferProperties.MEM_HOST_READ_ONLY;
 
 public class VectorSqrt extends AbstractCLSandbox {
 
@@ -48,8 +47,8 @@ public class VectorSqrt extends AbstractCLSandbox {
         CLBuffer cl_values = manage(mem(values, MEM_COPY_HOST_PTR, MEM_READ_ONLY, MEM_HOST_WRITE_ONLY));
         CLBuffer cl_results = manage(mem(count * Float.BYTES, MEM_ALLOC_HOST_PTR, MEM_WRITE_ONLY, MEM_HOST_READ_ONLY));
 
-        NDRange range = new NDRange(kernel.getMaxDimensions());
-        range.set(new long[]{workItems}, new long[]{workGroupSize});
+        NDRange range = new NDRange(1);
+        range.globalWorkSize(workItems).localWorkSize(workGroupSize);
         return new BenchmarkTask(() -> {
             range.requestEvent();
             kernel.setArg(0, cl_values);

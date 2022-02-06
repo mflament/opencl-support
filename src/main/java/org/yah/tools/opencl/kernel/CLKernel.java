@@ -1,36 +1,35 @@
 package org.yah.tools.opencl.kernel;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
 import org.yah.tools.opencl.CLException;
 import org.yah.tools.opencl.CLObject;
-import org.yah.tools.opencl.enums.deviceinfo.DeviceInfo;
+import org.yah.tools.opencl.enums.kernewglinfo.KernelWorkGroupInfo;
 import org.yah.tools.opencl.mem.CLMemObject;
 import org.yah.tools.opencl.platform.CLDevice;
 import org.yah.tools.opencl.program.CLProgram;
 
 import java.nio.*;
-import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import static org.lwjgl.opencl.CL10.*;
 import static org.yah.tools.opencl.CLException.check;
 
 public class CLKernel implements CLObject {
 
-    private final CLProgram program;
     private final long id;
+    private final String name;
     private final int maxDimensions;
 
-    private static final ThreadLocal<ByteBuffer> argBuffer = ThreadLocal.withInitial(() -> BufferUtils.createByteBuffer(8));
+    private final ByteBuffer argBuffer = BufferUtils.createByteBuffer(32);
+    private final ByteBuffer infoBuffer = BufferUtils.createByteBuffer(256);
 
     public CLKernel(CLProgram program, String name) {
-        this.program = Objects.requireNonNull(program, "program is null");
-        id = CLException.apply(eb -> clCreateKernel(program.getId(), name, eb));
-        maxDimensions = (int) getDevices()
-                .stream()
-                .mapToInt(device -> device.getDeviceInfo(DeviceInfo.DEVICE_MAX_WORK_ITEM_DIMENSIONS))
-                .min()
-                .orElse(0);
+        this.id = CLException.apply(eb -> clCreateKernel(program.getId(), name, eb));
+        this.name = Objects.requireNonNull(name, "name is null");
+        this.maxDimensions = program.getMaxDimensions();
     }
 
     @Override
@@ -38,12 +37,21 @@ public class CLKernel implements CLObject {
         return id;
     }
 
-    public CLProgram getProgram() {
-        return program;
-    }
-
-    public List<CLDevice> getDevices() {
-        return program.getDevices();
+    public <T> T getKernelWorkGroupInfo(CLDevice device, KernelWorkGroupInfo<T> info) {
+        infoBuffer.clear();
+        long deviceId = device.getId();
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            PointerBuffer sizeBuffer = stack.mallocPointer(1);
+            check(clGetKernelWorkGroupInfo(this.id, deviceId, info.id(), (ByteBuffer) null, sizeBuffer));
+            int size = (int) sizeBuffer.get(0);
+            if (size > infoBuffer.remaining())
+                throw new BufferOverflowException();
+            infoBuffer.limit(size);
+            check(clGetKernelWorkGroupInfo(this.id, deviceId, info.id(), infoBuffer, null));
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Error reading device " + name + " info " + info, e);
+        }
+        return info.read(device, infoBuffer);
     }
 
     public int getMaxDimensions() {
@@ -102,32 +110,34 @@ public class CLKernel implements CLObject {
     }
 
     public void setArg(int index, short value) {
-        check(clSetKernelArg(id, index, argBuffer().putShort(value).flip()));
+        check(clSetKernelArg(id, index, argBuffer(b -> b.putShort(value))));
     }
 
     public void setArg(int index, int value) {
-        check(clSetKernelArg(id, index, argBuffer().putInt(value).flip()));
+        check(clSetKernelArg(id, index, argBuffer(b -> b.putInt(value))));
     }
 
     public void setArg(int index, long value) {
-        check(clSetKernelArg(id, index, argBuffer().putLong(value).flip()));
+        check(clSetKernelArg(id, index, argBuffer(b -> b.putLong(value))));
     }
 
     public void setArg(int index, float value) {
-        check(clSetKernelArg(id, index, argBuffer().putFloat(value).flip()));
+        check(clSetKernelArg(id, index, argBuffer(b -> b.putFloat(value))));
     }
 
     public void setArg(int index, double value) {
-        check(clSetKernelArg(id, index, argBuffer().putDouble(value).flip()));
+        check(clSetKernelArg(id, index, argBuffer(b -> b.putDouble(value))));
     }
 
     public void setArgSize(int index, long size) {
         check(clSetKernelArg(id, index, size));
     }
 
-    private ByteBuffer argBuffer() {
-        ByteBuffer b = argBuffer.get();
-        return b.position(0).limit(b.capacity());
+    private ByteBuffer argBuffer(Consumer<ByteBuffer> init) {
+        argBuffer.position(0).limit(argBuffer.capacity());
+        init.accept(argBuffer);
+        argBuffer.flip();
+        return argBuffer;
     }
 
 }

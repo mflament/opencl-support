@@ -37,8 +37,8 @@ public class VectorSum extends AbstractCLSandbox {
         CLBuffer cl_results = manage(mem(results.capacity(), MEM_ALLOC_HOST_PTR, MEM_READ_WRITE, MEM_HOST_READ_ONLY));
 
         CLKernel kernel = program.kernel("sum");
-        NDRange range = new NDRange(kernel.getMaxDimensions());
-        range.set(new long[]{workItems}, new long[]{workGroupSize});
+        NDRange range = new NDRange(1);
+        range.globalWorkSize(workItems).localWorkSize(workGroupSize);
         range.requestEvent();
         kernel.setArg(0, cl_values);
         kernel.setArg(1, cl_results);

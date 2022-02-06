@@ -1,151 +1,191 @@
 package org.yah.tools.opencl;
 
-import static org.lwjgl.opencl.CL10.CL_BUILD_PROGRAM_FAILURE;
-import static org.lwjgl.opencl.CL10.CL_COMPILER_NOT_AVAILABLE;
-import static org.lwjgl.opencl.CL10.CL_DEVICE_NOT_AVAILABLE;
-import static org.lwjgl.opencl.CL10.CL_DEVICE_NOT_FOUND;
-import static org.lwjgl.opencl.CL10.CL_IMAGE_FORMAT_MISMATCH;
-import static org.lwjgl.opencl.CL10.CL_IMAGE_FORMAT_NOT_SUPPORTED;
-import static org.lwjgl.opencl.CL10.CL_INVALID_ARG_INDEX;
-import static org.lwjgl.opencl.CL10.CL_INVALID_ARG_SIZE;
-import static org.lwjgl.opencl.CL10.CL_INVALID_ARG_VALUE;
-import static org.lwjgl.opencl.CL10.CL_INVALID_BINARY;
-import static org.lwjgl.opencl.CL10.CL_INVALID_BUFFER_SIZE;
-import static org.lwjgl.opencl.CL10.CL_INVALID_BUILD_OPTIONS;
-import static org.lwjgl.opencl.CL10.CL_INVALID_COMMAND_QUEUE;
-import static org.lwjgl.opencl.CL10.CL_INVALID_CONTEXT;
-import static org.lwjgl.opencl.CL10.CL_INVALID_DEVICE;
-import static org.lwjgl.opencl.CL10.CL_INVALID_DEVICE_TYPE;
-import static org.lwjgl.opencl.CL10.CL_INVALID_EVENT;
-import static org.lwjgl.opencl.CL10.CL_INVALID_EVENT_WAIT_LIST;
-import static org.lwjgl.opencl.CL10.CL_INVALID_GLOBAL_OFFSET;
-import static org.lwjgl.opencl.CL10.CL_INVALID_GLOBAL_WORK_SIZE;
-import static org.lwjgl.opencl.CL10.CL_INVALID_HOST_PTR;
-import static org.lwjgl.opencl.CL10.CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
-import static org.lwjgl.opencl.CL10.CL_INVALID_IMAGE_SIZE;
-import static org.lwjgl.opencl.CL10.CL_INVALID_KERNEL;
-import static org.lwjgl.opencl.CL10.CL_INVALID_KERNEL_ARGS;
-import static org.lwjgl.opencl.CL10.CL_INVALID_KERNEL_DEFINITION;
-import static org.lwjgl.opencl.CL10.CL_INVALID_KERNEL_NAME;
-import static org.lwjgl.opencl.CL10.CL_INVALID_MEM_OBJECT;
-import static org.lwjgl.opencl.CL10.CL_INVALID_OPERATION;
-import static org.lwjgl.opencl.CL10.CL_INVALID_PLATFORM;
-import static org.lwjgl.opencl.CL10.CL_INVALID_PROGRAM;
-import static org.lwjgl.opencl.CL10.CL_INVALID_PROGRAM_EXECUTABLE;
-import static org.lwjgl.opencl.CL10.CL_INVALID_QUEUE_PROPERTIES;
-import static org.lwjgl.opencl.CL10.CL_INVALID_SAMPLER;
-import static org.lwjgl.opencl.CL10.CL_INVALID_VALUE;
-import static org.lwjgl.opencl.CL10.CL_INVALID_WORK_DIMENSION;
-import static org.lwjgl.opencl.CL10.CL_INVALID_WORK_GROUP_SIZE;
-import static org.lwjgl.opencl.CL10.CL_INVALID_WORK_ITEM_SIZE;
-import static org.lwjgl.opencl.CL10.CL_MAP_FAILURE;
-import static org.lwjgl.opencl.CL10.CL_MEM_COPY_OVERLAP;
-import static org.lwjgl.opencl.CL10.CL_MEM_OBJECT_ALLOCATION_FAILURE;
-import static org.lwjgl.opencl.CL10.CL_OUT_OF_HOST_MEMORY;
-import static org.lwjgl.opencl.CL10.CL_OUT_OF_RESOURCES;
-import static org.lwjgl.opencl.CL10.CL_PROFILING_INFO_NOT_AVAILABLE;
-import static org.lwjgl.opencl.CL10.CL_SUCCESS;
+import org.lwjgl.BufferUtils;
 
 import java.nio.IntBuffer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.lwjgl.BufferUtils;
+import static org.lwjgl.opencl.CL10.CL_SUCCESS;
 
 public class CLException extends RuntimeException {
 
     public static String messageFor(int code) {
         switch (code) {
-        case CL_DEVICE_NOT_FOUND:
-            return "CL_DEVICE_NOT_FOUND";
-        case CL_DEVICE_NOT_AVAILABLE:
-            return "CL_DEVICE_NOT_AVAILABLE";
-        case CL_COMPILER_NOT_AVAILABLE:
-            return "CL_COMPILER_NOT_AVAILABLE";
-        case CL_MEM_OBJECT_ALLOCATION_FAILURE:
-            return "CL_MEM_OBJECT_ALLOCATION_FAILURE";
-        case CL_OUT_OF_RESOURCES:
-            return "CL_OUT_OF_RESOURCES";
-        case CL_OUT_OF_HOST_MEMORY:
-            return "CL_OUT_OF_HOST_MEMORY";
-        case CL_PROFILING_INFO_NOT_AVAILABLE:
-            return "CL_PROFILING_INFO_NOT_AVAILABLE";
-        case CL_MEM_COPY_OVERLAP:
-            return "CL_MEM_COPY_OVERLAP";
-        case CL_IMAGE_FORMAT_MISMATCH:
-            return "CL_IMAGE_FORMAT_MISMATCH";
-        case CL_IMAGE_FORMAT_NOT_SUPPORTED:
-            return "CL_IMAGE_FORMAT_NOT_SUPPORTED";
-        case CL_BUILD_PROGRAM_FAILURE:
-            return "CL_BUILD_PROGRAM_FAILURE";
-        case CL_MAP_FAILURE:
-            return "CL_MAP_FAILURE";
-        case CL_INVALID_VALUE:
-            return "CL_INVALID_VALUE";
-        case CL_INVALID_DEVICE_TYPE:
-            return "CL_INVALID_DEVICE_TYPE";
-        case CL_INVALID_PLATFORM:
-            return "CL_INVALID_PLATFORM";
-        case CL_INVALID_DEVICE:
-            return "CL_INVALID_DEVICE";
-        case CL_INVALID_CONTEXT:
-            return "CL_INVALID_CONTEXT";
-        case CL_INVALID_QUEUE_PROPERTIES:
-            return "CL_INVALID_QUEUE_PROPERTIES";
-        case CL_INVALID_COMMAND_QUEUE:
-            return "CL_INVALID_COMMAND_QUEUE";
-        case CL_INVALID_HOST_PTR:
-            return "CL_INVALID_HOST_PTR";
-        case CL_INVALID_MEM_OBJECT:
-            return "CL_INVALID_MEM_OBJECT";
-        case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR:
-            return "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR";
-        case CL_INVALID_IMAGE_SIZE:
-            return "CL_INVALID_IMAGE_SIZE";
-        case CL_INVALID_SAMPLER:
-            return "CL_INVALID_SAMPLER";
-        case CL_INVALID_BINARY:
-            return "CL_INVALID_BINARY";
-        case CL_INVALID_BUILD_OPTIONS:
-            return "CL_INVALID_BUILD_OPTIONS";
-        case CL_INVALID_PROGRAM:
-            return "CL_INVALID_PROGRAM";
-        case CL_INVALID_PROGRAM_EXECUTABLE:
-            return "CL_INVALID_PROGRAM_EXECUTABLE";
-        case CL_INVALID_KERNEL_NAME:
-            return "CL_INVALID_KERNEL_NAME";
-        case CL_INVALID_KERNEL_DEFINITION:
-            return "CL_INVALID_KERNEL_DEFINITION";
-        case CL_INVALID_KERNEL:
-            return "CL_INVALID_KERNEL";
-        case CL_INVALID_ARG_INDEX:
-            return "CL_INVALID_ARG_INDEX";
-        case CL_INVALID_ARG_VALUE:
-            return "CL_INVALID_ARG_VALUE";
-        case CL_INVALID_ARG_SIZE:
-            return "CL_INVALID_ARG_SIZE";
-        case CL_INVALID_KERNEL_ARGS:
-            return "CL_INVALID_KERNEL_ARGS";
-        case CL_INVALID_WORK_DIMENSION:
-            return "CL_INVALID_WORK_DIMENSION";
-        case CL_INVALID_WORK_GROUP_SIZE:
-            return "CL_INVALID_WORK_GROUP_SIZE";
-        case CL_INVALID_WORK_ITEM_SIZE:
-            return "CL_INVALID_WORK_ITEM_SIZE";
-        case CL_INVALID_GLOBAL_OFFSET:
-            return "CL_INVALID_GLOBAL_OFFSET";
-        case CL_INVALID_EVENT_WAIT_LIST:
-            return "CL_INVALID_EVENT_WAIT_LIST";
-        case CL_INVALID_EVENT:
-            return "CL_INVALID_EVENT";
-        case CL_INVALID_OPERATION:
-            return "CL_INVALID_OPERATION";
-        case CL_INVALID_BUFFER_SIZE:
-            return "CL_INVALID_BUFFER_SIZE";
-        case CL_INVALID_GLOBAL_WORK_SIZE:
-            return "CL_INVALID_GLOBAL_WORK_SIZE";
-        default:
-            return "Unknown code";
+            case 0:
+                return "CL_SUCCESS";
+            case -1:
+                return "CL_DEVICE_NOT_FOUND";
+            case -2:
+                return "CL_DEVICE_NOT_AVAILABLE";
+            case -3:
+                return "CL_COMPILER_NOT";
+            case -4:
+                return "CL_MEM_OBJECT";
+            case -5:
+                return "CL_OUT_OF_RESOURCES";
+            case -6:
+                return "CL_OUT_OF_HOST_MEMORY";
+            case -7:
+                return "CL_PROFILING_INFO_NOT";
+            case -8:
+                return "CL_MEM_COPY_OVERLAP";
+            case -9:
+                return "CL_IMAGE_FORMAT";
+            case -10:
+                return "CL_IMAGE_FORMAT_NOT";
+            case -11:
+                return "CL_BUILD_PROGRAM";
+            case -12:
+                return "CL_MAP_FAILURE";
+            case -13:
+                return "CL_MISALIGNED_SUB";
+            case -14:
+                return "CL_EXEC_STATUS_ERROR_";
+            case -15:
+                return "CL_COMPILE_PROGRAM";
+            case -16:
+                return "CL_LINKER_NOT_AVAILABLE";
+            case -17:
+                return "CL_LINK_PROGRAM_FAILURE";
+            case -18:
+                return "CL_DEVICE_PARTITION";
+            case -19:
+                return "CL_KERNEL_ARG_INFO";
+            case -30:
+                return "CL_INVALID_VALUE";
+            case -31:
+                return "CL_INVALID_DEVICE_TYPE";
+            case -32:
+                return "CL_INVALID_PLATFORM";
+            case -33:
+                return "CL_INVALID_DEVICE";
+            case -34:
+                return "CL_INVALID_CONTEXT";
+            case -35:
+                return "CL_INVALID_QUEUE_PROPERTIES";
+            case -36:
+                return "CL_INVALID_COMMAND_QUEUE";
+            case -37:
+                return "CL_INVALID_HOST_PTR";
+            case -38:
+                return "CL_INVALID_MEM_OBJECT";
+            case -39:
+                return "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR";
+            case -40:
+                return "CL_INVALID_IMAGE_SIZE";
+            case -41:
+                return "CL_INVALID_SAMPLER";
+            case -42:
+                return "CL_INVALID_BINARY";
+            case -43:
+                return "CL_INVALID_BUILD_OPTIONS";
+            case -44:
+                return "CL_INVALID_PROGRAM";
+            case -45:
+                return "CL_INVALID_PROGRAM_EXECUTABLE";
+            case -46:
+                return "CL_INVALID_KERNEL_NAME";
+            case -47:
+                return "CL_INVALID_KERNEL_DEFINITION";
+            case -48:
+                return "CL_INVALID_KERNEL";
+            case -49:
+                return "CL_INVALID_ARG_INDEX";
+            case -50:
+                return "CL_INVALID_ARG_VALUE";
+            case -51:
+                return "CL_INVALID_ARG_SIZE";
+            case -52:
+                return "CL_INVALID_KERNEL_ARGS";
+            case -53:
+                return "CL_INVALID_WORK_DIMENSION";
+            case -54:
+                return "CL_INVALID_WORK_GROUP_SIZE";
+            case -55:
+                return "CL_INVALID_WORK_ITEM_SIZE";
+            case -56:
+                return "CL_INVALID_GLOBAL_OFFSET";
+            case -57:
+                return "CL_INVALID_EVENT_WAIT_LIST";
+            case -58:
+                return "CL_INVALID_EVENT";
+            case -59:
+                return "CL_INVALID_OPERATION";
+            case -60:
+                return "CL_INVALID_GL_OBJECT";
+            case -61:
+                return "CL_INVALID_BUFFER_SIZE";
+            case -62:
+                return "CL_INVALID_MIP_LEVEL";
+            case -63:
+                return "CL_INVALID_GLOBAL_WORK_SIZE";
+            case -64:
+                return "CL_INVALID_PROPERTY";
+            case -65:
+                return "CL_INVALID_IMAGE_DESCRIPTOR";
+            case -66:
+                return "CL_INVALID_COMPILER_OPTIONS";
+            case -67:
+                return "CL_INVALID_LINKER_OPTIONS";
+            case -68:
+                return "CL_INVALID_DEVICE_PARTITION_COUNT";
+            case -69:
+                return "CL_INVALID_PIPE_SIZE";
+            case -70:
+                return "CL_INVALID_DEVICE_QUEUE";
+            case -1000:
+                return "CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR";
+            case -1001:
+                return "CL_PLATFORM_NOT_FOUND_KHR";
+            case -1002:
+                return "CL_INVALID_D3D10_DEVICE_KHR";
+            case -1003:
+                return "CL_INVALID_D3D10_RESOURCE_KHR";
+            case -1004:
+                return "CL_D3D10_RESOURCE_ALREADY_ACQUIRED_KHR";
+            case -1005:
+                return "CL_D3D10_RESOURCE_NOT_ACQUIRED_KHR";
+            case -1006:
+                return "CL_INVALID_D3D11_DEVICE_KHR";
+            case -1007:
+                return "CL_INVALID_D3D11_RESOURCE_KHR";
+            case -1008:
+                return "CL_D3D11_RESOURCE_ALREADY_ACQUIRED_KHR";
+            case -1009:
+                return "CL_D3D11_RESOURCE_NOT_ACQUIRED_KHR";
+            case -1010:
+                return "CL_INVALID_D3D9_DEVICE_NV";
+            case -1011:
+                return "CL_INVALID_D3D9_RESOURCE_NV";
+            case -1012:
+                return "CL_D3D9_RESOURCE_ALREADY_ACQUIRED_NV";
+            case -1013:
+                return "CL_D3D9_RESOURCE_NOT_ACQUIRED_NV";
+            case -1092:
+                return "CL_EGL_RESOURCE_NOT_ACQUIRED_KHR";
+            case -1093:
+                return "CL_INVALID_EGL_OBJECT_KHR";
+            case -1094:
+                return "CL_INVALID_ACCELERATOR_INTEL";
+            case -1095:
+                return "CL_INVALID_ACCELERATOR_TYPE_INTEL";
+            case -1096:
+                return "CL_INVALID_ACCELERATOR_DESCRIPTOR_INTEL";
+            case -1097:
+                return "CL_ACCELERATOR_TYPE_NOT_SUPPORTED_INTEL";
+            case -1098:
+                return "CL_INVALID_VA_API_MEDIA_ADAPTER_INTEL";
+            case -1099:
+                return "CL_INVALID_VA_API_MEDIA_SURFACE_INTEL";
+            case -1100:
+                return "CL_VA_API_MEDIA_SURFACE_ALREADY_ACQUIRED_INTEL";
+            case -1101:
+                return "CL_VA_API_MEDIA_SURFACE_NOT_ACQUIRED_INTEL";
+            case -9999: // https://stackoverflow.com/questions/29560921/opencl-error-9999-on-nvidia-k20m/47338497
+                return "NVIDIA clEnqueueNDRangeKernel Illegal read or write to a buffer";
+            default:
+                return "Unknown code " + code;
         }
     }
 
@@ -158,12 +198,13 @@ public class CLException extends RuntimeException {
     }
 
     public CLException(int error, String message) {
-        super(String.format("OpenCL error %d: %s%s", error, messageFor(error),
-                message != null ? ("\n" + message) : ""));
+        super(String.format("OpenCL error %d: %s%s", error, messageFor(error), message != null ? ("\n" + message) : ""));
         this.error = error;
     }
 
-    public int getError() { return error; }
+    public int getError() {
+        return error;
+    }
 
     public static void check(int error) {
         if (error != CL_SUCCESS)
