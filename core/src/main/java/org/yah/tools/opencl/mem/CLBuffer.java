@@ -8,6 +8,8 @@ import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
+import org.lwjgl.BufferUtils;
+import org.lwjgl.PointerBuffer;
 import org.yah.tools.opencl.CLException;
 import org.yah.tools.opencl.context.CLContext;
 import org.yah.tools.opencl.enums.BufferProperties;
@@ -19,8 +21,12 @@ public class CLBuffer implements CLMemObject {
 
     private final long id;
 
+    private final PointerBuffer pointerBuffer;
+
     private CLBuffer(long id) {
         this.id = id;
+        this.pointerBuffer = BufferUtils.createPointerBuffer(1);
+        this.pointerBuffer.put(0, id);
     }
 
     public CLSubBuffer createSubBuffer(long offset, long size, BufferProperties... properties) {
@@ -30,6 +36,11 @@ public class CLBuffer implements CLMemObject {
     @Override
     public long getId() {
         return id;
+    }
+
+    @Override
+    public PointerBuffer getPointer() {
+        return pointerBuffer;
     }
 
     @Override

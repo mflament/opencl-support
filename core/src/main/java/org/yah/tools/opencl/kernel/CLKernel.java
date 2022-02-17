@@ -10,6 +10,7 @@ import org.yah.tools.opencl.mem.CLMemObject;
 import org.yah.tools.opencl.platform.CLDevice;
 import org.yah.tools.opencl.program.CLProgram;
 
+import javax.annotation.Nonnull;
 import java.nio.*;
 import java.util.Objects;
 
@@ -61,8 +62,8 @@ public class CLKernel implements CLObject {
         clReleaseKernel(id);
     }
 
-    public void setArg(int index, CLMemObject memObject) {
-        check(clSetKernelArg(id, index, memObject == null ? 0L : memObject.getId()));
+    public void setArg(int index, @Nonnull CLMemObject memObject) {
+        check(clSetKernelArg(id, index, memObject.getPointer()));
     }
 
     public void setArg(int index, ByteBuffer buffer) {
