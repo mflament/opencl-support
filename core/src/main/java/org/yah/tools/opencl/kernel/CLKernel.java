@@ -3,8 +3,13 @@ package org.yah.tools.opencl.kernel;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.yah.tools.opencl.CLException;
 import org.yah.tools.opencl.CLObject;
+import org.yah.tools.opencl.enums.CLEnum;
+import org.yah.tools.opencl.enums.KernelArgAccessQualifier;
+import org.yah.tools.opencl.enums.KernelArgAddressQualifier;
+import org.yah.tools.opencl.enums.KernelArgTypeQualifier;
 import org.yah.tools.opencl.enums.wglinfo.KernelWorkGroupInfo;
 import org.yah.tools.opencl.mem.CLMemObject;
 import org.yah.tools.opencl.platform.CLDevice;
@@ -19,21 +24,40 @@ import static org.yah.tools.opencl.CLException.check;
 
 public class CLKernel implements CLObject {
 
+    private final CLProgram program;
     private final long id;
     private final String name;
-    private final int maxDimensions;
 
     private final ByteBuffer infoBuffer = BufferUtils.createByteBuffer(256);
 
     public CLKernel(CLProgram program, String name) {
-        this.id = CLException.apply(eb -> clCreateKernel(program.getId(), name, eb));
+        this.program = Objects.requireNonNull(program, "program is null");
         this.name = Objects.requireNonNull(name, "name is null");
-        this.maxDimensions = program.getMaxDimensions();
+        this.id = CLException.apply(eb -> clCreateKernel(program.getId(), name, eb));
+    }
+
+    public CLKernel(CLProgram program, long id) {
+        this.program = Objects.requireNonNull(program, "program is null");
+        this.id = id;
+        this.name = getKernelName(id);
+    }
+
+    private static String getKernelName(long id) {
+        PointerBuffer sizeBuffer = BufferUtils.createPointerBuffer(1);
+        check(clGetKernelInfo(id, CL_KERNEL_FUNCTION_NAME, (ByteBuffer) null, sizeBuffer));
+        ByteBuffer nameBuffer = BufferUtils.createByteBuffer((int) sizeBuffer.get(0));
+        check(clGetKernelInfo(id, CL_KERNEL_FUNCTION_NAME, nameBuffer, null));
+        return MemoryUtil.memUTF8Safe(nameBuffer);
     }
 
     @Override
     public long getId() {
         return id;
+    }
+
+    @Override
+    public void close() {
+        clReleaseKernel(id);
     }
 
     public <T> T getKernelWorkGroupInfo(CLDevice device, KernelWorkGroupInfo<T> info) {
@@ -54,12 +78,48 @@ public class CLKernel implements CLObject {
     }
 
     public int getMaxDimensions() {
-        return maxDimensions;
+        return program.getMaxDimensions();
     }
 
-    @Override
-    public void close() {
-        clReleaseKernel(id);
+    public int getNumArgs() {
+        int[] na = new int[1];
+        check(clGetKernelInfo(id, CL_KERNEL_NUM_ARGS, na, null));
+        return na[0];
+    }
+
+    public String getAttributes() {
+        PointerBuffer sizeBuffer = BufferUtils.createPointerBuffer(1);
+        check(clGetKernelInfo(id, CL_KERNEL_ATTRIBUTES, (ByteBuffer) null, sizeBuffer));
+        ByteBuffer namesBuffer = BufferUtils.createByteBuffer((int) sizeBuffer.get(0));
+        check(clGetKernelInfo(id, CL_KERNEL_ATTRIBUTES, namesBuffer, null));
+        return MemoryUtil.memUTF8Safe(namesBuffer);
+    }
+
+    public CLKernelArgInfo getArgInfo(int argIndex) {
+        CLKernelArgInfo.Builder builder = CLKernelArgInfo.builder();
+        int[] intBuffer = new int[1];
+
+        check(clGetKernelArgInfo(id, argIndex, CL_KERNEL_ARG_ADDRESS_QUALIFIER, intBuffer, null));
+        builder.withAddressQualifier(CLEnum.get(intBuffer[0], KernelArgAddressQualifier.values()));
+
+        check(clGetKernelArgInfo(id, argIndex, CL_KERNEL_ARG_ACCESS_QUALIFIER, intBuffer, null));
+        builder.withAccessQualifier(CLEnum.get(intBuffer[0], KernelArgAccessQualifier.values()));
+
+        check(clGetKernelArgInfo(id, argIndex, CL_KERNEL_ARG_TYPE_QUALIFIER, intBuffer, null));
+        builder.withTypeQualifier(CLEnum.get(intBuffer[0], KernelArgTypeQualifier.values()));
+
+        PointerBuffer sizeBuffer = BufferUtils.createPointerBuffer(1);
+        check(clGetKernelArgInfo(id, argIndex, CL_KERNEL_ARG_TYPE_NAME, (ByteBuffer) null, sizeBuffer));
+        ByteBuffer nameBuffer = BufferUtils.createByteBuffer((int) sizeBuffer.get(0));
+        check(clGetKernelArgInfo(id, argIndex, CL_KERNEL_ARG_TYPE_NAME, nameBuffer, null));
+        builder.withTypeName(MemoryUtil.memUTF8Safe(nameBuffer));
+
+        check(clGetKernelArgInfo(id, argIndex, CL_KERNEL_ARG_NAME, (ByteBuffer) null, sizeBuffer));
+        nameBuffer = BufferUtils.createByteBuffer((int) sizeBuffer.get(0));
+        check(clGetKernelArgInfo(id, argIndex, CL_KERNEL_ARG_NAME, nameBuffer, null));
+        builder.withArgName(MemoryUtil.memUTF8Safe(nameBuffer));
+
+        return builder.build();
     }
 
     public void setArg(int index, @Nonnull CLMemObject memObject) {

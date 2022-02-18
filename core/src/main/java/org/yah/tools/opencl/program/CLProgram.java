@@ -1,11 +1,14 @@
 package org.yah.tools.opencl.program;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.yah.tools.opencl.CLException;
 import org.yah.tools.opencl.CLObject;
 import org.yah.tools.opencl.context.CLContext;
+import org.yah.tools.opencl.enums.CLEnum;
+import org.yah.tools.opencl.enums.ProgramBinaryType;
 import org.yah.tools.opencl.enums.deviceinfo.DeviceInfo;
 import org.yah.tools.opencl.kernel.CLKernel;
 import org.yah.tools.opencl.platform.CLDevice;
@@ -24,19 +27,27 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-import static org.lwjgl.opencl.CL10.*;
+import static org.lwjgl.opencl.CL12.*;
 import static org.yah.tools.opencl.CLException.apply;
+import static org.yah.tools.opencl.CLException.check;
 
 public class CLProgram implements CLObject {
     private final long id;
     private final CLContext context;
     private final List<CLDevice> devices;
+    private final int maxDimensions;
 
     private CLProgram(long id, CLContext context, List<CLDevice> devices) {
         this.id = id;
         this.context = context;
         this.devices = devices;
+        maxDimensions = devices.stream()
+                .mapToInt(device -> device.getDeviceInfo(DeviceInfo.DEVICE_MAX_WORK_ITEM_DIMENSIONS))
+                .min()
+                .orElse(0);
     }
 
     public CLContext getContext() {
@@ -48,14 +59,7 @@ public class CLProgram implements CLObject {
     }
 
     public int getMaxDimensions() {
-        return devices.stream()
-                .mapToInt(device -> device.getDeviceInfo(DeviceInfo.DEVICE_MAX_WORK_ITEM_DIMENSIONS))
-                .min()
-                .orElse(0);
-    }
-
-    public CLKernel kernel(String name) {
-        return new CLKernel(this, name);
+        return maxDimensions;
     }
 
     @Override
@@ -66,6 +70,27 @@ public class CLProgram implements CLObject {
     @Override
     public void close() {
         clReleaseProgram(id);
+    }
+
+    public ProgramBinaryType getBinaryType(long device) {
+        int[] type = new int[1];
+        check(clGetProgramBuildInfo(id, device, CL_PROGRAM_BINARY_TYPE, type, null));
+        return CLEnum.get(type[0], ProgramBinaryType.values());
+    }
+
+    public List<CLKernel> newKernels() {
+        int[] sizeBuffer = new int[1];
+        check(clCreateKernelsInProgram(id, null, sizeBuffer));
+        PointerBuffer kernelsBuffer = BufferUtils.createPointerBuffer(sizeBuffer[0]);
+        check(clCreateKernelsInProgram(id, kernelsBuffer, (int[]) null));
+        return IntStream.range(0, sizeBuffer[0])
+                .mapToLong(kernelsBuffer::get)
+                .mapToObj(kernelId -> new CLKernel(this, kernelId))
+                .collect(Collectors.toList());
+    }
+
+    public CLKernel newKernel(String name) {
+        return new CLKernel(this, name);
     }
 
     public static Builder builder(CLContext context) {

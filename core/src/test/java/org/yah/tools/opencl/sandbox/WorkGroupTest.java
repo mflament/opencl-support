@@ -20,7 +20,7 @@ public class WorkGroupTest extends AbstractCLSandbox {
 
     @Test
     public void run() {
-        CLKernel kernel = program.kernel("wgtest");
+        CLKernel kernel = program.newKernel("wgtest");
         NDRange range = new NDRange(1).globalWorkSize(16).localWorkSize(4);
         range.validate(program.getDevices());
         commandQueue.run(kernel, range);
