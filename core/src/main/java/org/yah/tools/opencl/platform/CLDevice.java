@@ -1,8 +1,8 @@
 package org.yah.tools.opencl.platform;
 
-import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
+import org.yah.tools.opencl.CLUtils;
 import org.yah.tools.opencl.enums.DeviceAddressBits;
 import org.yah.tools.opencl.enums.deviceinfo.DeviceInfo;
 
@@ -27,9 +27,7 @@ public class CLDevice {
     private final String name;
     private final DeviceAddressBits addressBits;
 
-    private final ConcurrentMap<DeviceInfo<?>, Object> infosCache = new ConcurrentHashMap<>();
-
-    private final ByteBuffer infoBuffer = BufferUtils.createByteBuffer(8 * 1024);
+    private final ConcurrentMap<DeviceInfo<?>, Object> cachedDeviceInfo = new ConcurrentHashMap<>();
 
     public CLDevice(CLPlatform platform, long deviceId) {
         this.id = deviceId;
@@ -56,23 +54,12 @@ public class CLDevice {
 
     @SuppressWarnings("unchecked")
     public <T> T getDeviceInfo(DeviceInfo<T> info) {
-        return (T) infosCache.computeIfAbsent(info, this::readDeviceInfo);
+        return (T) cachedDeviceInfo.computeIfAbsent(info, this::readDeviceInfo);
     }
 
     private synchronized <T> T readDeviceInfo(DeviceInfo<T> info) {
-        infoBuffer.clear();
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            PointerBuffer sizeBuffer = stack.mallocPointer(1);
-            check(clGetDeviceInfo(id, info.id(), (ByteBuffer) null, sizeBuffer));
-            int size = (int) sizeBuffer.get(0);
-            if (size > infoBuffer.remaining())
-                throw new BufferOverflowException();
-            infoBuffer.limit(size);
-            check(clGetDeviceInfo(id, info.id(), infoBuffer, null));
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Error reading device " + name + " info " + info, e);
-        }
-        return info.read(this, infoBuffer);
+        ByteBuffer buffer = CLUtils.readSizedParam((sb, bb) -> clGetDeviceInfo(id, info.id(), bb, sb));
+        return info.read(this, buffer);
     }
 
     @Override

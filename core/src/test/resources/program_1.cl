@@ -1,6 +1,6 @@
 kernel void firstKernel(global const int* gInts,
                     local int* lInts,
-                    int* pInts,
+                    int pInt,
                     read_only image2d_t roImage,
                     write_only image2d_t rwImage) {
 }

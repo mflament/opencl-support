@@ -5,14 +5,13 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.opencl.CL;
 import org.lwjgl.opencl.CL10;
 import org.lwjgl.opencl.CLCapabilities;
-import org.lwjgl.system.MemoryStack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.yah.tools.opencl.CLUtils;
 import org.yah.tools.opencl.enums.DeviceType;
 import org.yah.tools.opencl.enums.deviceinfo.DeviceInfo;
 import org.yah.tools.opencl.enums.platforminfo.PlatformInfo;
 
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -36,13 +35,13 @@ public class CLPlatform {
         if (countBuffer.get(0) == 0)
             return Collections.emptyList();
 
-        List<CLPlatform> plaforms = new ArrayList<>(count);
+        List<CLPlatform> platforms = new ArrayList<>(count);
         PointerBuffer platformIds = BufferUtils.createPointerBuffer(count);
         check(clGetPlatformIDs(platformIds, countBuffer));
         for (int i = 0; i < countBuffer.get(0); i++) {
-            plaforms.add(new CLPlatform(platformIds.get(i)));
+            platforms.add(new CLPlatform(platformIds.get(i)));
         }
-        return plaforms;
+        return platforms;
     }
 
     public static CLPlatform getDefaultPlatform() {
@@ -62,7 +61,7 @@ public class CLPlatform {
     public CLPlatform(long id) {
         super();
         this.id = id;
-        this.name = (String) readPlatformInfo(PlatformInfo.PLATFORM_NAME, BufferUtils.createByteBuffer(4 * 1024));
+        this.name = (String) readPlatformInfo(PlatformInfo.PLATFORM_NAME);
     }
 
     public long getId() {
@@ -127,12 +126,12 @@ public class CLPlatform {
         CLCapabilities capabilities = getCapabilities();
         ByteBuffer buffer = BufferUtils.createByteBuffer(8 * 1024);
         printer.println(getName());
-        printer.println("\tvendor:  ", readPlatformInfo(PlatformInfo.PLATFORM_VENDOR, buffer));
-        printer.println("\tversion: ", readPlatformInfo(PlatformInfo.PLATFORM_VERSION, buffer));
-        printer.println("\tprofile: ", readPlatformInfo(PlatformInfo.PLATFORM_PROFILE, buffer));
-        printer.println("\texts:    ", readPlatformInfo(PlatformInfo.PLATFORM_EXTENSIONS, buffer));
+        printer.println("\tvendor:  ", readPlatformInfo(PlatformInfo.PLATFORM_VENDOR));
+        printer.println("\tversion: ", readPlatformInfo(PlatformInfo.PLATFORM_VERSION));
+        printer.println("\tprofile: ", readPlatformInfo(PlatformInfo.PLATFORM_PROFILE));
+        printer.println("\texts:    ", readPlatformInfo(PlatformInfo.PLATFORM_EXTENSIONS));
         if (PlatformInfo.PLATFORM_HOST_TIMER_RESOLUTION.available(capabilities))
-            printer.println("\thost_timer_res:    " + readPlatformInfo(PlatformInfo.PLATFORM_HOST_TIMER_RESOLUTION, buffer));
+            printer.println("\thost_timer_res:    " + readPlatformInfo(PlatformInfo.PLATFORM_HOST_TIMER_RESOLUTION));
         printer.println("\tdevices:");
         List<CLDevice> devices = getDevices(DeviceType.DEVICE_TYPE_ALL);
         List<DeviceInfo<?>> deviceInfos = DeviceInfo.DEVICE_INFOS.stream()
@@ -148,16 +147,8 @@ public class CLPlatform {
         return sb.toString();
     }
 
-    public Object readPlatformInfo(PlatformInfo<?> info, ByteBuffer buffer) {
-        buffer.clear();
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            PointerBuffer sizeBuffer = stack.mallocPointer(1);
-            check(clGetPlatformInfo(id, info.id(), (ByteBuffer) null, sizeBuffer));
-            int size = (int) sizeBuffer.get(0);
-            if (size > buffer.remaining())
-                throw new BufferOverflowException();
-            check(clGetPlatformInfo(id, info.id(), buffer, null));
-        }
+    public Object readPlatformInfo(PlatformInfo<?> info) {
+        ByteBuffer buffer = CLUtils.readSizedParam((sb, bb) -> clGetPlatformInfo(id, info.id(), bb, sb));
         return info.read(buffer);
     }
 

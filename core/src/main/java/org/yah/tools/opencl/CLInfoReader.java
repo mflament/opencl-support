@@ -29,16 +29,7 @@ public interface CLInfoReader<T> extends CLDeviceInfoReader<T> {
     }
 
     static CLInfoReader<String> cl_string() {
-        StringBuilder sb = new StringBuilder();
-        return buffer -> {
-            while (buffer.hasRemaining()) {
-                byte b = buffer.get();
-                if (b == 0)
-                    break;
-                sb.append((char) b);
-            }
-            return sb.toString();
-        };
+        return CLUtils::readCLString;
     }
 
     static <T extends Enum<T> & CLEnum> CLInfoReader<T> cl_enum(Class<T> enumType) {

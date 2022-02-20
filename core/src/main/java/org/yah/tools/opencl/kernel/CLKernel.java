@@ -2,6 +2,7 @@ package org.yah.tools.opencl.kernel;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryUtil;
 import org.yah.tools.opencl.CLException;
 import org.yah.tools.opencl.CLObject;
 import org.yah.tools.opencl.CLUtils;
@@ -15,6 +16,7 @@ import org.yah.tools.opencl.platform.CLDevice;
 import org.yah.tools.opencl.program.CLProgram;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Member;
 import java.nio.*;
 import java.util.Objects;
 
@@ -87,12 +89,18 @@ public class CLKernel implements CLObject {
         check(clGetKernelArgInfo(id, argIndex, CL_KERNEL_ARG_ACCESS_QUALIFIER, buffer, null));
         builder.withAccessQualifier(CLEnum.get(buffer.get(0), KernelArgAccessQualifier.values()));
 
+
         PointerBuffer sizeBuffer = BufferUtils.createPointerBuffer(1);
-        check(clGetKernelArgInfo(id, argIndex, CL_KERNEL_ARG_TYPE_QUALIFIER, (LongBuffer) null, sizeBuffer));
-        System.out.println(sizeBuffer.get(0));
-        LongBuffer bitfield = BufferUtils.createLongBuffer(1);
-        check(clGetKernelArgInfo(id, argIndex, CL_KERNEL_ARG_TYPE_QUALIFIER, bitfield, null));
-        builder.withTypeQualifier(CLEnum.get((int) bitfield.get(0), KernelArgTypeQualifier.values()));
+        int ret = nclGetKernelArgInfo(id, argIndex, 0x1199, 0, 0, MemoryUtil.memAddressSafe(sizeBuffer));
+        System.out.println(ret + " : " + sizeBuffer.get(0));
+        sizeBuffer = BufferUtils.createPointerBuffer(1);
+        ret = nclGetKernelArgInfo(id, argIndex, CL_KERNEL_ARG_TYPE_QUALIFIER, 0, 0, MemoryUtil.memAddressSafe(sizeBuffer));
+        System.out.println(ret + " : " + sizeBuffer.get(0));
+//        check(clGetKernelArgInfo(id, argIndex, CL_KERNEL_ARG_TYPE_QUALIFIER, (LongBuffer) null, sizeBuffer));
+//        System.out.println(sizeBuffer.get(0));
+//        LongBuffer bitfield = BufferUtils.createLongBuffer(1);
+//        check(clGetKernelArgInfo(id, argIndex, CL_KERNEL_ARG_TYPE_QUALIFIER, bitfield, null));
+//        builder.withTypeQualifier(CLEnum.get((int) bitfield.get(0), KernelArgTypeQualifier.values()));
 
         return builder.build();
     }
