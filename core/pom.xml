@@ -21,6 +21,12 @@
             <classifier>natives-windows</classifier>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+            <classifier>natives-linux</classifier>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
