@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static org.lwjgl.opencl.CL10.clCreateContext;
 import static org.lwjgl.opencl.CL10.clReleaseContext;
@@ -110,6 +111,10 @@ public class CLContext implements CLObject {
 
     public List<CLDevice> getDevices() {
         return devices;
+    }
+
+    public Optional<CLDevice> findDevice(long deviceId) {
+        return devices.stream().filter(d -> d.getId() == deviceId).findFirst();
     }
 
     public CLProgram.Builder programBuilder() {

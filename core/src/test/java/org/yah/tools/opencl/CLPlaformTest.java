@@ -12,7 +12,7 @@ public class CLPlaformTest {
         platforms.forEach(p -> System.out.println(p.toDetailedString()));
 
         CLPlatform platform = CLPlatform.getDefaultPlatform();
-        CLDevice device = platform != null ? platform.getDefaultDevice() : null;
+        CLDevice device = platform.getDefaultDevice();
         System.out.println("\ndefault device: " + platform + " / " + device);
     }
 

@@ -9,7 +9,6 @@ import org.yah.tools.opencl.mem.CLBuffer;
 import org.yah.tools.opencl.program.CLProgram;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +24,7 @@ public abstract class AbstractCLSandbox implements AutoCloseable {
 
     private final Closables managedResources = new Closables();
 
-    public AbstractCLSandbox(String sourceFile) throws IOException {
+    public AbstractCLSandbox(String sourceFile) {
         context = manage(new CLContext());
         program = manage(context.programBuilder().withFile("classpath:" + sourceFile).build());
         commandQueue = manage(context.buildCommandQueue().build());

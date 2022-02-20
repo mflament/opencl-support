@@ -8,19 +8,18 @@
         <groupId>org.yah.tools.opencl</groupId>
         <version>1.0.1-SNAPSHOT</version>
     </parent>
-
     <artifactId>core</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>org.yah.lwjgl</groupId>
-            <artifactId>lwjgl</artifactId>
-            <type>pom</type>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-opencl</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.yah.lwjgl</groupId>
-            <artifactId>opencl</artifactId>
-            <type>pom</type>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+            <classifier>natives-windows</classifier>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -39,8 +38,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

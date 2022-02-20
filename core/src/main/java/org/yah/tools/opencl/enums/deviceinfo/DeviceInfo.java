@@ -15,6 +15,7 @@ import static org.lwjgl.opencl.CL21.*;
 public class DeviceInfo<T> implements CLEnum, CLDeviceInfoReader<T> {
 
     public static final DeviceInfo<DeviceType> DEVICE_TYPE = new DeviceInfo<>("DEVICE_TYPE", CL_DEVICE_TYPE, CLInfoReader.cl_enum(DeviceType.class));
+
     public static final DeviceInfo<Integer> DEVICE_VENDOR_ID = new DeviceInfo<>("DEVICE_VENDOR_ID", CL_DEVICE_VENDOR_ID, CLInfoReader.cl_uint());
 
     public static final DeviceInfo<Integer> DEVICE_MAX_COMPUTE_UNITS = new DeviceInfo<>("DEVICE_MAX_COMPUTE_UNITS", CL_DEVICE_MAX_COMPUTE_UNITS, CLInfoReader.cl_uint());
