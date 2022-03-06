@@ -5,7 +5,7 @@ import org.yah.tools.opencl.platform.CLPlatform;
 
 import java.util.List;
 
-public class CLPlaformTest {
+public class CLPlatformTest {
 
     public static void main(String[] args) {
         List<CLPlatform> platforms = CLPlatform.platforms();

@@ -19,7 +19,7 @@ public class VectorSum extends AbstractCLSandbox {
 
     private final FloatBuffer values;
 
-    public VectorSum(int valuesCount) throws IOException {
+    public VectorSum(int valuesCount) {
         super("vector_sum.cl");
         values = randomFloats(valuesCount);
     }
@@ -42,8 +42,8 @@ public class VectorSum extends AbstractCLSandbox {
         range.requestEvent();
         kernel.setArg(0, cl_values);
         kernel.setArg(1, cl_results);
-        kernel.setArg1i(2, count);
-        kernel.setArg1i(3, workGroupSize * Float.BYTES);
+        kernel.setArg(2, count);
+        kernel.setArg(3, workGroupSize * Float.BYTES);
 
         long event = commandQueue.run(kernel, range);
         commandQueue.waitForEvent(event);

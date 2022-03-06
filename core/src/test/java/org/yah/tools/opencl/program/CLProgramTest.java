@@ -8,8 +8,8 @@ import org.yah.tools.opencl.platform.CLDevice;
 import org.yah.tools.opencl.platform.CLPlatform;
 
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,9 +21,9 @@ class CLProgramTest {
     void testNewKernels() {
         CLTestSupport.runWithProgram("program_1.cl", p -> {
             List<CLKernel> kernels = p.newKernels();
-            assertEquals(2, kernels.size());
-            assertTrue(kernels.stream().anyMatch(k -> k.getName().equals("firstKernel")));
-            assertTrue(kernels.stream().anyMatch(k -> k.getName().equals("secondKernel")));
+            assertEquals(3, kernels.size());
+            Set<String> kernelNames = kernels.stream().map(CLKernel::getName).collect(Collectors.toSet());
+            assertEquals(new HashSet<>(Arrays.asList("firstKernel", "secondKernel", "thirdKernel")),kernelNames);
         });
     }
 

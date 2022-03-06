@@ -1,12 +1,11 @@
 package org.yah.tools.opencl.platform;
 
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
 import org.yah.tools.opencl.CLUtils;
+import org.yah.tools.opencl.context.CLContext;
 import org.yah.tools.opencl.enums.DeviceAddressBits;
 import org.yah.tools.opencl.enums.deviceinfo.DeviceInfo;
 
-import java.nio.BufferOverflowException;
+import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.Objects;
@@ -14,7 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.lwjgl.opencl.CL10.clGetDeviceInfo;
-import static org.yah.tools.opencl.CLException.check;
 
 public class CLDevice {
 
@@ -50,6 +48,18 @@ public class CLDevice {
 
     public DeviceAddressBits getAddressBits() {
         return addressBits;
+    }
+
+    public CLContext newContext() {
+        return newContext(null);
+    }
+
+    public CLContext newContext(@Nullable CLContext.ErrorHandler errorHandler) {
+        return CLContext.builder()
+                .withPlatform(platform)
+                .withDevice(this)
+                .withErrorHandler(errorHandler)
+                .build();
     }
 
     @SuppressWarnings("unchecked")

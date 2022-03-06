@@ -90,9 +90,9 @@ public class DeviceInfo<T> implements CLEnum, CLDeviceInfoReader<T> {
 
     public static final DeviceInfo<Boolean> DEVICE_COMPILER_AVAILABLE = new DeviceInfo<>("DEVICE_COMPILER_AVAILABLE", CL_DEVICE_COMPILER_AVAILABLE, CLInfoReader.cl_bool());
 
-    public static final DeviceInfo<CLEnumSet<DeviceExecutionCapability>> DEVICE_EXECUTION_CAPABILITIES = new DeviceInfo<>("DEVICE_EXECUTION_CAPABILITIES", CL_DEVICE_EXECUTION_CAPABILITIES, CLInfoReader.cl_bitfield(DeviceExecutionCapability.class));
+    public static final DeviceInfo<CLBitfield<DeviceExecutionCapability>> DEVICE_EXECUTION_CAPABILITIES = new DeviceInfo<>("DEVICE_EXECUTION_CAPABILITIES", CL_DEVICE_EXECUTION_CAPABILITIES, CLInfoReader.cl_bitfield(DeviceExecutionCapability.class));
 
-    public static final DeviceInfo<CLEnumSet<CommandQueueProperty>> DEVICE_QUEUE_PROPERTIES = new DeviceInfo<>("DEVICE_QUEUE_PROPERTIES", CL_DEVICE_QUEUE_PROPERTIES, CLInfoReader.cl_bitfield(CommandQueueProperty.class));
+    public static final DeviceInfo<CLBitfield<CommandQueueProperty>> DEVICE_QUEUE_PROPERTIES = new DeviceInfo<>("DEVICE_QUEUE_PROPERTIES", CL_DEVICE_QUEUE_PROPERTIES, CLInfoReader.cl_bitfield(CommandQueueProperty.class));
 
     public static final DeviceInfo<String> DEVICE_NAME = new DeviceInfo<>("DEVICE_NAME", CL_DEVICE_NAME, CLInfoReader.cl_string());
 
@@ -146,13 +146,13 @@ public class DeviceInfo<T> implements CLEnum, CLDeviceInfoReader<T> {
 
     public static final DeviceInfo<Long> DEVICE_PRINTF_BUFFER_SIZE = new DeviceInfo<>("DEVICE_PRINTF_BUFFER_SIZE", CL_DEVICE_PRINTF_BUFFER_SIZE, CLDeviceInfoReader.size_t(), CLVersion.CL12);
 
-    public static final DeviceInfo<CLEnumSet<CommandQueueProperty>> DEVICE_QUEUE_ON_HOST_PROPERTIES = new DeviceInfo<>("DEVICE_QUEUE_ON_HOST_PROPERTIES", CL_DEVICE_QUEUE_ON_HOST_PROPERTIES, CLInfoReader.cl_bitfield(CommandQueueProperty.class), CLVersion.CL20);
+    public static final DeviceInfo<CLBitfield<CommandQueueProperty>> DEVICE_QUEUE_ON_HOST_PROPERTIES = new DeviceInfo<>("DEVICE_QUEUE_ON_HOST_PROPERTIES", CL_DEVICE_QUEUE_ON_HOST_PROPERTIES, CLInfoReader.cl_bitfield(CommandQueueProperty.class), CLVersion.CL20);
 
     public static final DeviceInfo<Integer> DEVICE_MAX_READ_WRITE_IMAGE_ARGS = new DeviceInfo<>("DEVICE_MAX_READ_WRITE_IMAGE_ARGS", CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS, CLInfoReader.cl_uint(), CLVersion.CL20);
 
     public static final DeviceInfo<Long> DEVICE_MAX_GLOBAL_VARIABLE_SIZE = new DeviceInfo<>("DEVICE_MAX_GLOBAL_VARIABLE_SIZE", CL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE, CLDeviceInfoReader.size_t(), CLVersion.CL20);
 
-    public static final DeviceInfo<CLEnumSet<CommandQueueProperty>> DEVICE_QUEUE_ON_DEVICE_PROPERTIES = new DeviceInfo<>("DEVICE_QUEUE_ON_DEVICE_PROPERTIES", CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES, CLInfoReader.cl_bitfield(CommandQueueProperty.class), CLVersion.CL20);
+    public static final DeviceInfo<CLBitfield<CommandQueueProperty>> DEVICE_QUEUE_ON_DEVICE_PROPERTIES = new DeviceInfo<>("DEVICE_QUEUE_ON_DEVICE_PROPERTIES", CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES, CLInfoReader.cl_bitfield(CommandQueueProperty.class), CLVersion.CL20);
 
     public static final DeviceInfo<Integer> DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE = new DeviceInfo<>("DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE", CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE, CLInfoReader.cl_uint(), CLVersion.CL20);
 
@@ -182,17 +182,17 @@ public class DeviceInfo<T> implements CLEnum, CLDeviceInfoReader<T> {
 
     public static final DeviceInfo<Boolean> DEVICE_SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS = new DeviceInfo<>("DEVICE_SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS", CL_DEVICE_SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS, CLInfoReader.cl_bool(), CLVersion.CL21);
 
-    public static final DeviceInfo<CLEnumSet<DeviceFPConfig>> DEVICE_SINGLE_FP_CONFIG = new DeviceInfo<>("DEVICE_SINGLE_FP_CONFIG", CL_DEVICE_SINGLE_FP_CONFIG, CLInfoReader.cl_bitfield(DeviceFPConfig.class));
+    public static final DeviceInfo<CLBitfield<DeviceFPConfig>> DEVICE_SINGLE_FP_CONFIG = new DeviceInfo<>("DEVICE_SINGLE_FP_CONFIG", CL_DEVICE_SINGLE_FP_CONFIG, CLInfoReader.cl_bitfield(DeviceFPConfig.class));
 
-    public static final DeviceInfo<CLEnumSet<DeviceFPConfig>> DEVICE_DOUBLE_FP_CONFIG = new DeviceInfo<>("DEVICE_DOUBLE_FP_CONFIG", CL_DEVICE_DOUBLE_FP_CONFIG, CLInfoReader.cl_bitfield(DeviceFPConfig.class), CLVersion.CL12);
+    public static final DeviceInfo<CLBitfield<DeviceFPConfig>> DEVICE_DOUBLE_FP_CONFIG = new DeviceInfo<>("DEVICE_DOUBLE_FP_CONFIG", CL_DEVICE_DOUBLE_FP_CONFIG, CLInfoReader.cl_bitfield(DeviceFPConfig.class), CLVersion.CL12);
 
     public static final DeviceInfo<GlobalMemCacheType> DEVICE_GLOBAL_MEM_CACHE_TYPE = new DeviceInfo<>("DEVICE_GLOBAL_MEM_CACHE_TYPE", CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, CLInfoReader.cl_enum(GlobalMemCacheType.class));
 
     public static final DeviceInfo<LocalMemType> DEVICE_LOCAL_MEM_TYPE = new DeviceInfo<>("DEVICE_LOCAL_MEM_TYPE", CL_DEVICE_LOCAL_MEM_TYPE, CLInfoReader.cl_enum(LocalMemType.class));
 
-    public static final DeviceInfo<CLEnumSet<DeviceAffinityDomain>> DEVICE_PARTITION_AFFINITY_DOMAIN = new DeviceInfo<>("DEVICE_PARTITION_AFFINITY_DOMAIN", CL_DEVICE_PARTITION_AFFINITY_DOMAIN, CLInfoReader.cl_bitfield(DeviceAffinityDomain.class), CLVersion.CL12);
+    public static final DeviceInfo<CLBitfield<DeviceAffinityDomain>> DEVICE_PARTITION_AFFINITY_DOMAIN = new DeviceInfo<>("DEVICE_PARTITION_AFFINITY_DOMAIN", CL_DEVICE_PARTITION_AFFINITY_DOMAIN, CLInfoReader.cl_bitfield(DeviceAffinityDomain.class), CLVersion.CL12);
 
-    public static final DeviceInfo<CLEnumSet<DeviceSVMCapability>> DEVICE_SVM_CAPABILITIES = new DeviceInfo<>("DEVICE_SVM_CAPABILITIES", CL_DEVICE_SVM_CAPABILITIES, CLInfoReader.cl_bitfield(DeviceSVMCapability.class), CLVersion.CL20);
+    public static final DeviceInfo<CLBitfield<DeviceSVMCapability>> DEVICE_SVM_CAPABILITIES = new DeviceInfo<>("DEVICE_SVM_CAPABILITIES", CL_DEVICE_SVM_CAPABILITIES, CLInfoReader.cl_bitfield(DeviceSVMCapability.class), CLVersion.CL20);
 
     // unhandled
 

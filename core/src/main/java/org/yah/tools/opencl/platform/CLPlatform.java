@@ -17,6 +17,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.lwjgl.opencl.CL10.*;
@@ -52,7 +53,6 @@ public class CLPlatform {
             return new CLPlatform(platforms.get(0));
         throw new IllegalStateException("No default platform");
     }
-
 
     private final long id;
     private final String name;
@@ -112,6 +112,19 @@ public class CLPlatform {
     @Override
     public String toString() {
         return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CLPlatform that = (CLPlatform) o;
+        return id == that.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     public String toDetailedString() {

@@ -8,17 +8,18 @@ import java.util.function.Function;
 
 public final class CLTestSupport {
 
-    private CLTestSupport() {}
+    private CLTestSupport() {
+    }
 
     public static void runWithProgram(String resource, Consumer<CLProgram> test) {
         runWithProgram(context -> context.programBuilder()
-                .withFile("classpath:" + resource)
+                .withResource(resource)
                 .withOptions("-cl-kernel-arg-info")
                 .build(), test);
     }
 
     public static void runWithProgram(Function<CLContext, CLProgram> factory, Consumer<CLProgram> test) {
-        try (CLContext context = new CLContext();
+        try (CLContext context = CLContext.builder().build();
              CLProgram program = factory.apply(context)) {
             test.accept(program);
         }

@@ -1,7 +1,7 @@
 package org.yah.tools.opencl;
 
 import org.yah.tools.opencl.enums.CLEnum;
-import org.yah.tools.opencl.enums.CLEnumSet;
+import org.yah.tools.opencl.enums.CLBitfield;
 import org.yah.tools.opencl.platform.CLDevice;
 
 import java.nio.ByteBuffer;
@@ -40,11 +40,11 @@ public interface CLInfoReader<T> extends CLDeviceInfoReader<T> {
         };
     }
 
-    static <T extends Enum<T> & CLEnum> CLInfoReader<CLEnumSet<T>> cl_bitfield(Class<T> enumType) {
+    static <T extends Enum<T> & CLEnum> CLInfoReader<CLBitfield<T>> cl_bitfield(Class<T> enumType) {
         T[] values = enumType.getEnumConstants();
         return buffer -> {
             int id = buffer.getInt();
-            return new CLEnumSet<>(id, values);
+            return CLBitfield.from(id, values);
         };
     }
 

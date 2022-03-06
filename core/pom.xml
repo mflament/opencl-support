@@ -6,7 +6,7 @@
     <parent>
         <artifactId>opencl-support</artifactId>
         <groupId>org.yah.tools.opencl</groupId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>1.1.0-SNAPSHOT</version>
     </parent>
     <artifactId>core</artifactId>
 
@@ -14,18 +14,6 @@
         <dependency>
             <groupId>org.lwjgl</groupId>
             <artifactId>lwjgl-opencl</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.lwjgl</groupId>
-            <artifactId>lwjgl</artifactId>
-            <classifier>natives-windows</classifier>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.lwjgl</groupId>
-            <artifactId>lwjgl</artifactId>
-            <classifier>natives-linux</classifier>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -39,13 +27,8 @@
         </dependency>
 
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
+            <groupId>org.yah.tools.opencl</groupId>
+            <artifactId>cl-test-support</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

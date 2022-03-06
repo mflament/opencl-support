@@ -9,10 +9,7 @@ import org.yah.tools.opencl.kernel.CLKernel;
 import org.yah.tools.opencl.mem.CLBuffer;
 import org.yah.tools.opencl.platform.CLDevice;
 
-import java.nio.ByteBuffer;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
+import java.nio.*;
 import java.util.Objects;
 
 import static org.lwjgl.opencl.CL12.*;
@@ -62,84 +59,115 @@ public class CLCommandQueue implements CLObject {
         return range.flushEvent();
     }
 
-    public void read(CLBuffer buffer, ByteBuffer target) {
-        read(buffer, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
+    public void read(CLBuffer source, ByteBuffer target) {
+        read(source, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
     }
 
-    public void read(CLBuffer buffer, IntBuffer target) {
-        read(buffer, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
+    public void read(CLBuffer source, IntBuffer target) {
+        read(source, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
     }
 
-    public void read(CLBuffer buffer, FloatBuffer target) {
-        read(buffer, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
+    public void read(CLBuffer source, FloatBuffer target) {
+        read(source, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
     }
 
-    public void read(CLBuffer buffer, DoubleBuffer target) {
-        read(buffer, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
+    public void read(CLBuffer source, DoubleBuffer target) {
+        read(source, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
     }
 
-    public long read(CLBuffer buffer, ByteBuffer target, boolean blocking, long offset, CLEventsBuffer events) {
-        check(clEnqueueReadBuffer(id, buffer.getId(), blocking, offset, target,
+    public long read(CLBuffer source, ByteBuffer target, boolean blocking, long offset, CLEventsBuffer events) {
+        check(clEnqueueReadBuffer(id, source.getId(), blocking, offset, target,
                 events.getEventWaitListBuffer(), events.getEventBuffer()));
         return events.flushEvent();
     }
 
-    public long read(CLBuffer buffer, IntBuffer target, boolean blocking, long offset, CLEventsBuffer events) {
-        check(clEnqueueReadBuffer(id, buffer.getId(), blocking, offset, target,
+
+    public long read(CLBuffer source, ShortBuffer target, boolean blocking, long offset, CLEventsBuffer events) {
+        check(clEnqueueReadBuffer(id, source.getId(), blocking, offset, target,
                 events.getEventWaitListBuffer(), events.getEventBuffer()));
         return events.flushEvent();
     }
 
-    public long read(CLBuffer buffer, FloatBuffer target, boolean blocking, long offset, CLEventsBuffer events) {
-        check(clEnqueueReadBuffer(id, buffer.getId(), blocking, offset, target,
+    public long read(CLBuffer source, IntBuffer target, boolean blocking, long offset, CLEventsBuffer events) {
+        check(clEnqueueReadBuffer(id, source.getId(), blocking, offset, target,
                 events.getEventWaitListBuffer(), events.getEventBuffer()));
         return events.flushEvent();
     }
 
-    public long read(CLBuffer buffer, DoubleBuffer target, boolean blocking, long offset, CLEventsBuffer events) {
-        check(clEnqueueReadBuffer(id, buffer.getId(), blocking, offset, target,
+    public long read(CLBuffer source, FloatBuffer target, boolean blocking, long offset, CLEventsBuffer events) {
+        check(clEnqueueReadBuffer(id, source.getId(), blocking, offset, target,
                 events.getEventWaitListBuffer(), events.getEventBuffer()));
         return events.flushEvent();
     }
 
-    public void write(CLBuffer buffer, ByteBuffer target) {
-        write(buffer, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
-    }
-
-    public void write(CLBuffer buffer, IntBuffer target) {
-        write(buffer, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
-    }
-
-    public void write(CLBuffer buffer, DoubleBuffer target) {
-        write(buffer, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
-    }
-
-    public void write(CLBuffer buffer, FloatBuffer target) {
-        write(buffer, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
-    }
-
-    public long write(CLBuffer buffer, IntBuffer target, boolean blocking, long offset, CLEventsBuffer events) {
-        check(clEnqueueWriteBuffer(id, buffer.getId(), blocking, offset, target,
+    public long read(CLBuffer source, DoubleBuffer target, boolean blocking, long offset, CLEventsBuffer events) {
+        check(clEnqueueReadBuffer(id, source.getId(), blocking, offset, target,
                 events.getEventWaitListBuffer(), events.getEventBuffer()));
         return events.flushEvent();
     }
 
-    public long write(CLBuffer buffer, DoubleBuffer target, boolean blocking, long offset, CLEventsBuffer events) {
-        check(clEnqueueWriteBuffer(id, buffer.getId(), blocking, offset, target,
+    public long read(CLBuffer source, short[] target, boolean blocking, long offset, CLEventsBuffer events) {
+        check(clEnqueueReadBuffer(id, source.getId(), blocking, offset, target,
                 events.getEventWaitListBuffer(), events.getEventBuffer()));
         return events.flushEvent();
     }
 
-    public long write(CLBuffer buffer, FloatBuffer target, boolean blocking, long offset,
+    public long read(CLBuffer source, int[] target, boolean blocking, long offset, CLEventsBuffer events) {
+        check(clEnqueueReadBuffer(id, source.getId(), blocking, offset, target,
+                events.getEventWaitListBuffer(), events.getEventBuffer()));
+        return events.flushEvent();
+    }
+
+    public long read(CLBuffer source, float[] target, boolean blocking, long offset, CLEventsBuffer events) {
+        check(clEnqueueReadBuffer(id, source.getId(), blocking, offset, target,
+                events.getEventWaitListBuffer(), events.getEventBuffer()));
+        return events.flushEvent();
+    }
+
+    public long read(CLBuffer source, double[] target, boolean blocking, long offset, CLEventsBuffer events) {
+        check(clEnqueueReadBuffer(id, source.getId(), blocking, offset, target,
+                events.getEventWaitListBuffer(), events.getEventBuffer()));
+        return events.flushEvent();
+    }
+
+    public void write(ByteBuffer source, CLBuffer target) {
+        write(source, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
+    }
+
+    public void write(IntBuffer source, CLBuffer target) {
+        write(source, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
+    }
+
+    public void write(DoubleBuffer source, CLBuffer target) {
+        write(source, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
+    }
+
+    public void write(FloatBuffer source, CLBuffer target) {
+        write(source, target, true, 0, CLEventsBuffer.EMPTY_PARAM);
+    }
+
+    public long write(IntBuffer source, CLBuffer target, boolean blocking, long offset, CLEventsBuffer events) {
+        check(clEnqueueWriteBuffer(id, target.getId(), blocking, offset, source,
+                events.getEventWaitListBuffer(), events.getEventBuffer()));
+        return events.flushEvent();
+    }
+
+    public long write(DoubleBuffer source, CLBuffer target, boolean blocking, long offset, CLEventsBuffer events) {
+        check(clEnqueueWriteBuffer(id, target.getId(), blocking, offset, source,
+                events.getEventWaitListBuffer(), events.getEventBuffer()));
+        return events.flushEvent();
+    }
+
+    public long write(FloatBuffer source, CLBuffer target, boolean blocking, long offset,
                       CLEventsBuffer events) {
-        check(clEnqueueWriteBuffer(id, buffer.getId(), blocking, offset, target,
+        check(clEnqueueWriteBuffer(id, target.getId(), blocking, offset, source,
                 events.getEventWaitListBuffer(), events.getEventBuffer()));
         return events.flushEvent();
     }
 
-    public long write(CLBuffer buffer, ByteBuffer target, boolean blocking, long offset,
+    public long write(ByteBuffer source, CLBuffer target, boolean blocking, long offset,
                       CLEventsBuffer events) {
-        check(clEnqueueWriteBuffer(id, buffer.getId(), blocking, offset, target,
+        check(clEnqueueWriteBuffer(id, target.getId(), blocking, offset, source,
                 events.getEventWaitListBuffer(), events.getEventBuffer()));
         return events.flushEvent();
     }

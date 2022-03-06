@@ -3,6 +3,7 @@ package org.yah.tools.opencl.kernel;
 
 import org.junit.jupiter.api.Test;
 import org.yah.tools.opencl.CLTestSupport;
+import org.yah.tools.opencl.enums.CLBitfield;
 import org.yah.tools.opencl.enums.KernelArgAccessQualifier;
 import org.yah.tools.opencl.enums.KernelArgAddressQualifier;
 import org.yah.tools.opencl.enums.KernelArgTypeQualifier;
@@ -10,7 +11,7 @@ import org.yah.tools.opencl.enums.KernelArgTypeQualifier;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.yah.tools.opencl.enums.KernelArgAddressQualifier.GLOBAL;
+import static org.yah.tools.opencl.enums.KernelArgAddressQualifier.*;
 import static org.yah.tools.opencl.enums.KernelArgTypeQualifier.CONST;
 
 class CLKernelTest {
@@ -18,6 +19,7 @@ class CLKernelTest {
     public static final String PROGRAM_1 = "program_1.cl";
     public static final String KERNEL_1 = "firstKernel";
     public static final String KERNEL_2 = "secondKernel";
+    public static final String KERNEL_3 = "thirdKernel";
 
     @Test
     void testGetNumArgs() {
@@ -34,18 +36,33 @@ class CLKernelTest {
     @Test
     void testGetArgInfo() {
         withKernel(KERNEL_1, k -> {
-            CLKernelArgInfo argInfo = k.getArgInfo(0);
-            assertArgInfo(k.getArgInfo(0), "gInts", "int*", CONST, GLOBAL, null);
+            assertArgInfo(k.getArgInfo(0), "gInts", "int*", CLBitfield.of(CONST), GLOBAL, KernelArgAccessQualifier.NONE);
+            assertArgInfo(k.getArgInfo(1), "lInts", "int*", CLBitfield.empty(), LOCAL, KernelArgAccessQualifier.NONE);
+            assertArgInfo(k.getArgInfo(2), "pInt", "int", CLBitfield.empty(), PRIVATE, KernelArgAccessQualifier.NONE);
+            assertArgInfo(k.getArgInfo(3), "roImage", "image2d_t", CLBitfield.empty(), GLOBAL, KernelArgAccessQualifier.READ_ONLY);
+            assertArgInfo(k.getArgInfo(4), "rwImage", "image2d_t", CLBitfield.empty(), GLOBAL, KernelArgAccessQualifier.WRITE_ONLY);
         });
+
+        withKernel(KERNEL_2, k -> {
+            assertArgInfo(k.getArgInfo(0), "arg0", "uint16*", CLBitfield.of(CONST), CONSTANT, KernelArgAccessQualifier.NONE);
+            assertArgInfo(k.getArgInfo(1), "arg1", "int8*", CLBitfield.empty(), GLOBAL, KernelArgAccessQualifier.NONE);
+            assertArgInfo(k.getArgInfo(2), "arg2", "float3*", CLBitfield.empty(), LOCAL, KernelArgAccessQualifier.NONE);
+        });
+
+        withKernel(KERNEL_3, k -> {
+            CLKernelArgInfo info = k.getArgInfo(0);
+            System.out.println(info);
+        });
+
     }
 
     private static void assertArgInfo(CLKernelArgInfo argInfo, String expectedName,
-                                      String expectedType, KernelArgTypeQualifier expectedTypeQualifier,
+                                      String expectedType, CLBitfield<KernelArgTypeQualifier> expectedTypeQualifiers,
                                       KernelArgAddressQualifier expectedAddress,
                                       KernelArgAccessQualifier expectedAccess) {
         assertEquals(expectedName, argInfo.getArgName());
         assertEquals(expectedType, argInfo.getTypeName());
-        assertEquals(expectedTypeQualifier, argInfo.getTypeQualifier());
+        assertEquals(expectedTypeQualifiers, argInfo.getTypeQualifiers());
         assertEquals(expectedAddress, argInfo.getAddressQualifier());
         assertEquals(expectedAccess, argInfo.getAccessQualifier());
     }

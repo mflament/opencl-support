@@ -61,7 +61,7 @@ public class CLBuffer implements CLMemObject {
             return this;
         }
 
-        public CLBuffer build(int size) {
+        public CLBuffer build(long size) {
             long id = CLException.apply(eb -> clCreateBuffer(context.getId(), properties, size, eb));
             return new CLBuffer(id);
         }

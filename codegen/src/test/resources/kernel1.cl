@@ -1,3 +1,0 @@
-
-kernel void kernel1() {
-}

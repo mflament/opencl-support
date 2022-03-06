@@ -25,8 +25,8 @@ public abstract class AbstractCLSandbox implements AutoCloseable {
     private final Closables managedResources = new Closables();
 
     public AbstractCLSandbox(String sourceFile) {
-        context = manage(new CLContext());
-        program = manage(context.programBuilder().withFile("classpath:" + sourceFile).build());
+        context = manage(CLContext.builder().build());
+        program = manage(context.programBuilder().withResource(sourceFile).build());
         commandQueue = manage(context.buildCommandQueue().build());
     }
 

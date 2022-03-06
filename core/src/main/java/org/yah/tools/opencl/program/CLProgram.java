@@ -13,7 +13,6 @@ import org.yah.tools.opencl.enums.ProgramBinaryType;
 import org.yah.tools.opencl.enums.deviceinfo.DeviceInfo;
 import org.yah.tools.opencl.kernel.CLKernel;
 import org.yah.tools.opencl.platform.CLDevice;
-import org.yah.tools.opencl.platform.CLPlatform;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -37,6 +36,13 @@ public class CLProgram implements CLObject {
     private final CLContext context;
     private final List<CLDevice> devices;
     private final int maxDimensions;
+
+    protected CLProgram(CLProgram from) {
+        this.id = from.id;
+        this.context = from.context;
+        this.devices = from.devices;
+        this.maxDimensions = from.maxDimensions;
+    }
 
     private CLProgram(long id, CLContext context) {
         this.id = id;
@@ -103,6 +109,11 @@ public class CLProgram implements CLObject {
         return binaries;
     }
 
+    public List<String> getKernelNames() {
+        String names = CLUtils.readSizedString((sb, bb) -> clGetProgramInfo(id, CL_PROGRAM_KERNEL_NAMES, bb, sb));
+        return Arrays.asList(names.split(";"));
+    }
+
     public List<CLKernel> newKernels() {
         int[] numKernels = new int[1];
         check(clCreateKernelsInProgram(id, null, numKernels));
@@ -122,12 +133,6 @@ public class CLProgram implements CLObject {
         return new Builder(context);
     }
 
-    private static String trimToEmpty(String s) {
-        if (s == null)
-            return "";
-        return s.trim();
-    }
-
     private static List<CLDevice> getProgramDevices(long id, CLContext context) {
         int[] numDevices = new int[1];
         check(clGetProgramInfo(id, CL_PROGRAM_NUM_DEVICES, numDevices, null));
@@ -143,13 +148,11 @@ public class CLProgram implements CLObject {
      * @noinspection UnusedReturnValue
      */
     public static final class Builder {
+
         private final CLContext context;
         private final List<CLDevice> devices = new ArrayList<>();
-
-        private final byte[] buffer = new byte[5 * 1024];
-        private final ClassLoader classLoader = Builder.class.getClassLoader();
         private final List<String> sources = new ArrayList<>();
-        private String options = "";
+        private String options;
 
         public Builder(CLContext context) {
             this.context = Objects.requireNonNull(context, "context is null");
@@ -180,6 +183,11 @@ public class CLProgram implements CLObject {
             return this;
         }
 
+        public Builder withResource(String resource) {
+            withFile(CLUtils.resourcePath(resource));
+            return this;
+        }
+
         public CLProgram build() {
             if (sources.isEmpty())
                 throw new IllegalStateException("No sources");
@@ -191,7 +199,8 @@ public class CLProgram implements CLObject {
                 device_list.put(device.getId());
             device_list.flip();
 
-            int buildret = clBuildProgram(id, device_list, trimToEmpty(options), null, 0);
+            if (options == null) options = "";
+            int buildret = clBuildProgram(id, device_list, options, null, 0);
             if (buildret != CL_SUCCESS)
                 throw new CLBuildException(buildret, createLog(id, programDevices));
             return new CLProgram(id, context);
@@ -231,14 +240,13 @@ public class CLProgram implements CLObject {
             return sb.toString();
         }
 
-        private static final String CLASSPATH_PREFIX = "classpath:";
-
         private static InputStream openStream(String file) throws IOException {
-            if (file.startsWith(CLASSPATH_PREFIX)) {
-                String resource = file.substring(CLASSPATH_PREFIX.length());
-                URL url = CLPlatform.class.getClassLoader().getResource(resource);
+            String resourcePath = CLUtils.getResourcePath(file);
+            if (resourcePath != null) {
+                ClassLoader classLoader = CLProgram.class.getClassLoader();
+                URL url = classLoader.getResource(resourcePath);
                 if (url == null)
-                    throw new FileNotFoundException("Classpath resource " + resource + " was not found");
+                    throw new FileNotFoundException("Classpath resource " + resourcePath + " was not found");
                 return url.openStream();
             } else {
                 return Files.newInputStream(Paths.get(file));

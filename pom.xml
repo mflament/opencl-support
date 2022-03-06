@@ -4,13 +4,16 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.yah.tools.opencl</groupId>
     <artifactId>opencl-support</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.1.0-SNAPSHOT</version>
     <name>opencl support</name>
     <packaging>pom</packaging>
 
     <modules>
         <module>core</module>
         <module>codegen</module>
+        <module>opencl-support-maven-plugin</module>
+        <module>cl-test-support</module>
+        <module>codegen-sandbox</module>
     </modules>
 
     <properties>
@@ -21,7 +24,7 @@
         <maven.compiler.release>8</maven.compiler.release>
         <checkerframework.version>3.3.0</checkerframework.version>
         <lwjgl.version>3.3.1-SNAPSHOT</lwjgl.version>
-        <antlr.version>4.9.3</antlr.version>
+        <javaparser.version>3.24.0</javaparser.version>
     </properties>
 
     <scm>
@@ -57,6 +60,17 @@
                 <artifactId>codegen</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.yah.tools.opencl</groupId>
+                <artifactId>cl-test-support</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.yah.tools.opencl</groupId>
+                <artifactId>opencl-support-maven-plugin</artifactId>
+                <version>${project.version}</version>
+                <type>maven-plugin</type>
+            </dependency>
 
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
@@ -71,23 +85,43 @@
             </dependency>
 
             <dependency>
-                <groupId>org.antlr</groupId>
-                <artifactId>antlr4-runtime</artifactId>
-                <version>${antlr.version}</version>
+                <groupId>com.github.javaparser</groupId>
+                <artifactId>javaparser-core-generators</artifactId>
+                <version>3.24.0</version>
             </dependency>
 
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>1.2.10</version>
-                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.12.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven</groupId>
+                <artifactId>maven-core</artifactId>
+                <version>3.8.4</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.maven</groupId>
+                <artifactId>maven-compat</artifactId>
+                <version>3.8.4</version>
             </dependency>
 
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-api</artifactId>
                 <version>5.8.2</version>
-                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.maven.plugin-testing</groupId>
+                <artifactId>maven-plugin-testing-harness</artifactId>
+                <version>3.3.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -110,19 +144,25 @@
                 </plugin>
 
                 <plugin>
-                    <groupId>org.antlr</groupId>
-                    <artifactId>antlr4-maven-plugin</artifactId>
-                    <version>${antlr.version}</version>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-plugin-plugin</artifactId>
+                    <version>3.6.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.11.0</version>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-project-info-reports-plugin</artifactId>
+                    <version>3.2.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
-
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-            </plugin>
-        </plugins>
     </build>
 
 </project>
