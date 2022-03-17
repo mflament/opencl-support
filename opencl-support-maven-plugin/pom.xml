@@ -109,42 +109,6 @@
                     <generateReports>true</generateReports>
                 </configuration>
             </plugin>
-
-            <plugin>
-                <groupId>com.soebes.itf.jupiter.extension</groupId>
-                <artifactId>itf-maven-plugin</artifactId>
-                <version>${maven.itf.version}</version>
-                <executions>
-                    <execution>
-                        <id>installing</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>install</goal>
-                            <goal>resources-its</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <configuration>
-                    <systemProperties>
-                        <maven.version>${maven.version}</maven.version>
-                        <maven.home>${maven.home}</maven.home>
-                    </systemProperties>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
@@ -233,6 +197,50 @@
                     <scope>runtime</scope>
                 </dependency>
             </dependencies>
+        </profile>
+
+        <profile>
+            <id>its</id>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>com.soebes.itf.jupiter.extension</groupId>
+                        <artifactId>itf-maven-plugin</artifactId>
+                        <version>${maven.itf.version}</version>
+                        <executions>
+                            <execution>
+                                <id>installing</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                    <goal>resources-its</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>2.22.2</version>
+                        <configuration>
+                            <systemProperties>
+                                <maven.version>${maven.version}</maven.version>
+                                <maven.home>${maven.home}</maven.home>
+                            </systemProperties>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
     </profiles>

@@ -3,7 +3,7 @@ package org.yah.tools.opencl.codegen.model.kernel;
 import org.yah.tools.opencl.codegen.NamingStrategy;
 import org.yah.tools.opencl.codegen.model.TypeModel;
 import org.yah.tools.opencl.codegen.model.program.ProgramModel;
-import org.yah.tools.opencl.codegen.parser.model.ParsedKernel;
+import org.yah.tools.opencl.codegen.parser.ParsedKernel;
 
 import java.util.ArrayList;
 import java.util.Collection;

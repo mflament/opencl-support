@@ -2,7 +2,7 @@ package org.yah.tools.opencl.codegen.model.kernel.param;
 
 import org.yah.tools.opencl.codegen.model.kernel.KernelArgumentMethod;
 import org.yah.tools.opencl.codegen.model.kernel.methods.SetValue;
-import org.yah.tools.opencl.codegen.parser.model.type.CLType;
+import org.yah.tools.opencl.codegen.parser.type.CLType;
 
 public class Value extends AbstractKernelArgumentMethodParameter {
 

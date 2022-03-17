@@ -1,6 +1,6 @@
-package org.yah.tools.opencl.codegen.parser.model.attribute;
+package org.yah.tools.opencl.codegen.parser.attribute;
 
-import org.yah.tools.opencl.codegen.parser.model.type.CLType;
+import org.yah.tools.opencl.codegen.parser.type.CLType;
 
 import java.util.Objects;
 

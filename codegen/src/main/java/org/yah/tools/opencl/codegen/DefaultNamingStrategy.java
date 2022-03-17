@@ -5,15 +5,38 @@ import org.yah.tools.opencl.codegen.model.kernel.KernelMethodParameter;
 import org.yah.tools.opencl.codegen.model.kernel.KernelModel;
 import org.yah.tools.opencl.codegen.model.kernel.SetKernelArgumentMethod;
 import org.yah.tools.opencl.codegen.model.program.ProgramMethod;
-import org.yah.tools.opencl.codegen.parser.model.ParsedKernel;
-import org.yah.tools.opencl.codegen.parser.model.ParsedKernelArgument;
-import org.yah.tools.opencl.codegen.parser.model.ParsedProgram;
+import org.yah.tools.opencl.codegen.parser.ParsedKernel;
+import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
+import org.yah.tools.opencl.codegen.parser.ParsedProgram;
 import org.yah.tools.opencl.program.CLProgram;
+
+import javax.annotation.Nullable;
 
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
 public class DefaultNamingStrategy implements NamingStrategy {
-    private static final DefaultNamingStrategy INSTANCE = new DefaultNamingStrategy();
+
+    public static final class TypeNameDecorator {
+        @Nullable
+        private final String prefix;
+        @Nullable
+        private final String suffix;
+
+        public TypeNameDecorator(@Nullable String prefix, @Nullable String suffix) {
+            this.prefix = prefix;
+            this.suffix = suffix;
+        }
+
+        public String decorate(String name) {
+            String res = "";
+            if (prefix != null) res += prefix;
+            res += name;
+            if (suffix != null) res += suffix;
+            return res;
+        }
+    }
+
+    private static final DefaultNamingStrategy INSTANCE = new DefaultNamingStrategy(null, null);
 
     private static final String[] VECTOR_ARGS_NAME = {"x", "y", "z", "w"};
 
@@ -21,7 +44,15 @@ public class DefaultNamingStrategy implements NamingStrategy {
         return INSTANCE;
     }
 
-    private DefaultNamingStrategy() {
+    @Nullable
+    private final TypeNameDecorator programNameDecorator;
+
+    @Nullable
+    private final TypeNameDecorator kernelNameDecorator;
+
+    public DefaultNamingStrategy(@Nullable TypeNameDecorator programNameDecorator, @Nullable TypeNameDecorator kernelNameDecorator) {
+        this.programNameDecorator = programNameDecorator;
+        this.kernelNameDecorator = kernelNameDecorator;
     }
 
     @Override
@@ -29,7 +60,10 @@ public class DefaultNamingStrategy implements NamingStrategy {
         String name = baseName(program.getFilePath());
         if (!name.toLowerCase().contains("program"))
             name += "Program";
-        return camelCase(name, true);
+        name = camelCase(name, true);
+        if (programNameDecorator != null)
+            name = programNameDecorator.decorate(name);
+        return name;
     }
 
     @Override
@@ -37,7 +71,10 @@ public class DefaultNamingStrategy implements NamingStrategy {
         String name = parsedKernel.getName();
         if (!name.toLowerCase().endsWith("kernel"))
             name += "Kernel";
-        return camelCase(name, true);
+        name = camelCase(name, true);
+        if (kernelNameDecorator != null)
+            name = kernelNameDecorator.decorate(name);
+        return name;
     }
 
     @Override

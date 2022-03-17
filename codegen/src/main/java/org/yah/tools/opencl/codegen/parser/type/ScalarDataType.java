@@ -1,4 +1,4 @@
-package org.yah.tools.opencl.codegen.parser.model.type;
+package org.yah.tools.opencl.codegen.parser.type;
 
 import org.lwjgl.PointerBuffer;
 

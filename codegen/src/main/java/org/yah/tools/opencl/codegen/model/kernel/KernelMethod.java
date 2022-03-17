@@ -2,7 +2,7 @@ package org.yah.tools.opencl.codegen.model.kernel;
 
 import org.yah.tools.opencl.codegen.model.MethodModel;
 import org.yah.tools.opencl.codegen.model.kernel.methods.*;
-import org.yah.tools.opencl.codegen.parser.model.ParsedKernel;
+import org.yah.tools.opencl.codegen.parser.ParsedKernel;
 
 import java.util.List;
 

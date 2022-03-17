@@ -1,6 +1,6 @@
-package org.yah.tools.opencl.codegen.parser.model;
+package org.yah.tools.opencl.codegen.parser;
 
-import org.yah.tools.opencl.codegen.parser.model.type.CLType;
+import org.yah.tools.opencl.codegen.parser.type.CLType;
 import org.yah.tools.opencl.enums.CLBitfield;
 import org.yah.tools.opencl.enums.KernelArgAccessQualifier;
 import org.yah.tools.opencl.enums.KernelArgAddressQualifier;

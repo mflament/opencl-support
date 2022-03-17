@@ -16,9 +16,17 @@ import org.yah.tools.opencl.program.CLCompilerOptions;
 import org.yah.tools.opencl.program.CLProgram;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+
+import static org.yah.tools.opencl.codegen.DefaultNamingStrategy.TypeNameDecorator;
 
 /**
  * Generate opencl programs binding
@@ -74,10 +82,40 @@ public class GenerateBindingMojo extends AbstractMojo {
     private String compilerOptions;
 
     /**
-     * build program options
+     * prefix added to both program and kernel name
      */
-    @Parameter(property = SYSTEM_PROPERTY_PREFIX + "namingStrategy")
-    private String namingStrategy;
+    @Parameter
+    private String namePrefix;
+
+    /**
+     * suffix added to both program and kernel name
+     */
+    @Parameter
+    private String nameSuffix;
+
+    /**
+     * prefix added to program name
+     */
+    @Parameter
+    private String programNamePrefix;
+
+    /**
+     * suffix added to program name
+     */
+    @Parameter
+    private String programNameSuffix;
+
+    /**
+     * prefix added to program name
+     */
+    @Parameter
+    private String kernelNamePrefix;
+
+    /**
+     * suffix added to program name
+     */
+    @Parameter
+    private String kernelNameSuffix;
 
     @Parameter(defaultValue = "${project}", readonly = true)
     private MavenProject project;
@@ -89,7 +127,7 @@ public class GenerateBindingMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException {
         NamingStrategy namingStrategy = createNamingStrategy();
-        Path sourcePath = sourceDirectory != null ? Paths.get(sourceDirectory) : Paths.get(DEFAULT_SOURCE_DIRECTORY);
+        Path sourcePath = resolvePath(sourceDirectory, DEFAULT_SOURCE_DIRECTORY);
         if (!Files.exists(sourcePath)) {
             getLog().info("source directory " + sourcePath + " not found");
             return;
@@ -103,6 +141,12 @@ public class GenerateBindingMojo extends AbstractMojo {
         }
     }
 
+    private Path resolvePath(String path, String defaultPath) {
+        if (path == null)
+            path = defaultPath;
+        return project.getBasedir().toPath().resolve(path);
+    }
+
     private class BindingGenerator implements AutoCloseable {
         private final Path sourcePath;
         private final Path outputPath;
@@ -111,7 +155,7 @@ public class GenerateBindingMojo extends AbstractMojo {
 
         public BindingGenerator(Path sourcePath, NamingStrategy namingStrategy) {
             this.sourcePath = Objects.requireNonNull(sourcePath, "sourcePath is null");
-            outputPath = outputDirectory != null ? Paths.get(outputDirectory) : Paths.get(DEFAULT_OUTPUT_DIRECTORY);
+            outputPath = resolvePath(outputDirectory, DEFAULT_OUTPUT_DIRECTORY);
             programGenerator = new ProgramGenerator(outputPath, namingStrategy);
             context = CLContext.builder().build();
         }
@@ -194,17 +238,19 @@ public class GenerateBindingMojo extends AbstractMojo {
 
     }
 
-    private NamingStrategy createNamingStrategy() throws MojoExecutionException {
-        if (namingStrategy == null)
-            return DefaultNamingStrategy.get();
-        try {
-            Class<?> nsClass = Class.forName(namingStrategy);
-            if (!NamingStrategy.class.isAssignableFrom(nsClass))
-                throw new IllegalArgumentException("Class " + nsClass.getName() + " is not an instance of " + NamingStrategy.class.getName());
-            return (NamingStrategy) nsClass.getConstructor().newInstance();
-        } catch (Exception e) {
-            throw new MojoExecutionException("Error creating naming strategy " + namingStrategy, e);
-        }
+    private NamingStrategy createNamingStrategy() {
+        TypeNameDecorator programDecorator = createNameDecorator(programNamePrefix, programNameSuffix);
+        TypeNameDecorator kernelDecorator = createNameDecorator(kernelNamePrefix, kernelNameSuffix);
+        if (programDecorator != null || kernelDecorator != null)
+            return new DefaultNamingStrategy(programDecorator, kernelDecorator);
+        return DefaultNamingStrategy.get();
+    }
+
+    private TypeNameDecorator createNameDecorator(String prefix, String suffix) {
+        if (prefix == null) prefix = namePrefix;
+        if (suffix == null) suffix = nameSuffix;
+        if (prefix != null || suffix != null) return new TypeNameDecorator(prefix, suffix);
+        return null;
     }
 
 }

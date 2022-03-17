@@ -1,4 +1,4 @@
-package org.yah.tools.opencl.codegen.parser.model.attribute;
+package org.yah.tools.opencl.codegen.parser.attribute;
 
 public class WorkGroupSizeHint implements ParsedAttribute {
     private final int x,y,z;

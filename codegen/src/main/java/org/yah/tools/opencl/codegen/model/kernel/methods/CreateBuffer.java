@@ -5,7 +5,7 @@ import org.yah.tools.opencl.codegen.model.kernel.KernelModel;
 import org.yah.tools.opencl.codegen.model.kernel.param.Buffer;
 import org.yah.tools.opencl.codegen.model.kernel.param.BufferProperties;
 import org.yah.tools.opencl.codegen.model.kernel.param.BufferSize;
-import org.yah.tools.opencl.codegen.parser.model.ParsedKernelArgument;
+import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
 
 import java.util.Optional;
 import java.util.function.Function;

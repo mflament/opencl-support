@@ -2,8 +2,8 @@ package org.yah.tools.opencl.codegen.parser.clinfo;
 
 import org.lwjgl.BufferUtils;
 import org.yah.tools.opencl.CLParameterReader;
-import org.yah.tools.opencl.codegen.parser.model.ParsedKernelArgument;
-import org.yah.tools.opencl.codegen.parser.model.type.CLType;
+import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
+import org.yah.tools.opencl.codegen.parser.type.CLType;
 import org.yah.tools.opencl.enums.*;
 import org.yah.tools.opencl.kernel.CLKernel;
 

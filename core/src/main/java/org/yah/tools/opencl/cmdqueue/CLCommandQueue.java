@@ -8,6 +8,7 @@ import org.yah.tools.opencl.context.CLContext;
 import org.yah.tools.opencl.enums.CommandQueueProperty;
 import org.yah.tools.opencl.kernel.CLKernel;
 import org.yah.tools.opencl.mem.CLBuffer;
+import org.yah.tools.opencl.ndrange.NDRange;
 import org.yah.tools.opencl.platform.CLDevice;
 
 import javax.annotation.Nullable;
@@ -58,9 +59,9 @@ public class CLCommandQueue implements CLObject {
 
         check(clEnqueueNDRangeKernel(id, kernel.getId(),
                 range.getDimensions(),
-                range.getGlobalWorkOffsetsBuffer(),
-                range.getGlobalWorkSizesBuffer(),
-                range.getLocalWorkSizesBuffer(),
+                range.getGlobalWorkOffsets(),
+                range.getGlobalWorkSizes(),
+                range.getLocalWorkSizes(),
                 eventsWaitList,
                 eventBuffer));
 

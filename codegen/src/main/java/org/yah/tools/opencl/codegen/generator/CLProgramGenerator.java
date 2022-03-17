@@ -7,7 +7,7 @@ import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import org.yah.tools.opencl.codegen.model.kernel.KernelModel;
 import org.yah.tools.opencl.codegen.model.program.ProgramModel;
-import org.yah.tools.opencl.codegen.parser.model.ParsedProgram;
+import org.yah.tools.opencl.codegen.parser.ParsedProgram;
 import org.yah.tools.opencl.context.CLContext;
 import org.yah.tools.opencl.enums.CommandQueueProperty;
 import org.yah.tools.opencl.generated.AbstractGeneratedProgram;

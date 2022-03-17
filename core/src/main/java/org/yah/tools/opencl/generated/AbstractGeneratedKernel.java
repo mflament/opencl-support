@@ -2,7 +2,7 @@ package org.yah.tools.opencl.generated;
 
 import org.lwjgl.PointerBuffer;
 import org.yah.tools.opencl.cmdqueue.CLCommandQueue;
-import org.yah.tools.opencl.cmdqueue.NDRange;
+import org.yah.tools.opencl.ndrange.NDRange1;
 import org.yah.tools.opencl.enums.BufferProperty;
 import org.yah.tools.opencl.kernel.CLKernel;
 import org.yah.tools.opencl.mem.CLBuffer;
@@ -26,11 +26,15 @@ public abstract class AbstractGeneratedKernel implements AutoCloseable {
         closeables.add(kernel::close);
     }
 
-    protected void run(NDRange range, @Nullable PointerBuffer eventBuffer) {
+    protected void run(NDRange1 range, @Nullable PointerBuffer eventBuffer) {
         getCommandQueue().run(kernel, range, null, eventBuffer);
     }
 
-    protected final CLCommandQueue getCommandQueue() {
+    public CLKernel getKernel() {
+        return kernel;
+    }
+
+    public final CLCommandQueue getCommandQueue() {
         return generatedProgram.getCommandQueue();
     }
 

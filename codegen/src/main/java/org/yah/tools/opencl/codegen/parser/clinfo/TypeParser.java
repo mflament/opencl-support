@@ -1,6 +1,6 @@
 package org.yah.tools.opencl.codegen.parser.clinfo;
 
-import org.yah.tools.opencl.codegen.parser.model.type.*;
+import org.yah.tools.opencl.codegen.parser.type.*;
 
 public class TypeParser {
 

@@ -1,4 +1,4 @@
-package org.yah.tools.opencl.codegen.parser.model.attribute;
+package org.yah.tools.opencl.codegen.parser.attribute;
 
 import java.util.Objects;
 

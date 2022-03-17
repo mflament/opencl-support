@@ -2,7 +2,7 @@ package org.yah.tools.opencl.codegen.model.kernel.methods;
 
 import org.yah.tools.opencl.codegen.model.kernel.KernelModel;
 import org.yah.tools.opencl.codegen.model.kernel.SetKernelArgumentMethod;
-import org.yah.tools.opencl.codegen.parser.model.ParsedKernelArgument;
+import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
 
 abstract class AbstractSetKernelArgumentMethod extends AbstractKernelArgumentMethod implements SetKernelArgumentMethod {
 

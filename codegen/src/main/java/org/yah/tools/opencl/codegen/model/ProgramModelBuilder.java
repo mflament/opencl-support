@@ -9,11 +9,11 @@ import org.yah.tools.opencl.codegen.model.kernel.KernelModel;
 import org.yah.tools.opencl.codegen.model.kernel.SetKernelArgumentMethod;
 import org.yah.tools.opencl.codegen.model.kernel.methods.*;
 import org.yah.tools.opencl.codegen.model.program.ProgramModel;
-import org.yah.tools.opencl.codegen.parser.model.ParsedKernel;
-import org.yah.tools.opencl.codegen.parser.model.ParsedKernelArgument;
-import org.yah.tools.opencl.codegen.parser.model.ParsedProgram;
-import org.yah.tools.opencl.codegen.parser.model.type.CLType;
-import org.yah.tools.opencl.codegen.parser.model.type.ScalarDataType;
+import org.yah.tools.opencl.codegen.parser.ParsedKernel;
+import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
+import org.yah.tools.opencl.codegen.parser.ParsedProgram;
+import org.yah.tools.opencl.codegen.parser.type.CLType;
+import org.yah.tools.opencl.codegen.parser.type.ScalarDataType;
 import org.yah.tools.opencl.enums.KernelArgAddressQualifier;
 
 import java.nio.*;

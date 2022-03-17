@@ -1,6 +1,5 @@
-package org.yah.tools.opencl.codegen.parser.model.type;
+package org.yah.tools.opencl.codegen.parser.type;
 
-import java.nio.ByteBuffer;
 import java.util.Objects;
 
 public class UnresolvedType implements CLType {

@@ -1,7 +1,7 @@
 package org.yah.tools.opencl.codegen.model.program;
 
 import org.yah.tools.opencl.codegen.model.MethodModel;
-import org.yah.tools.opencl.codegen.parser.model.ParsedProgram;
+import org.yah.tools.opencl.codegen.parser.ParsedProgram;
 
 import java.util.List;
 

@@ -1,11 +1,11 @@
 package org.yah.tools.opencl.sandbox;
 
 import org.lwjgl.BufferUtils;
-import org.yah.tools.opencl.cmdqueue.NDRange;
+import org.yah.tools.opencl.ndrange.NDRange;
+import org.yah.tools.opencl.ndrange.NDRange1;
 import org.yah.tools.opencl.kernel.CLKernel;
 import org.yah.tools.opencl.mem.CLBuffer;
 
-import java.io.IOException;
 import java.nio.FloatBuffer;
 
 import static org.yah.tools.opencl.enums.BufferProperty.*;
@@ -37,7 +37,7 @@ public class VectorSum extends AbstractCLSandbox {
         CLBuffer cl_results = manage(mem(results.capacity(), MEM_ALLOC_HOST_PTR, MEM_READ_WRITE, MEM_HOST_READ_ONLY));
 
         CLKernel kernel = program.newKernel("sum");
-        NDRange range = new NDRange(1);
+        NDRange1 range = NDRange.range1();
         range.globalWorkSize(workItems).localWorkSize(workGroupSize);
 
         kernel.setArg(0, cl_values);

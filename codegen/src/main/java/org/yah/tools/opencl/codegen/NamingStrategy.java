@@ -3,9 +3,9 @@ package org.yah.tools.opencl.codegen;
 import org.yah.tools.opencl.codegen.model.kernel.KernelMethod;
 import org.yah.tools.opencl.codegen.model.kernel.KernelMethodParameter;
 import org.yah.tools.opencl.codegen.model.program.ProgramMethod;
-import org.yah.tools.opencl.codegen.parser.model.ParsedKernel;
-import org.yah.tools.opencl.codegen.parser.model.ParsedKernelArgument;
-import org.yah.tools.opencl.codegen.parser.model.ParsedProgram;
+import org.yah.tools.opencl.codegen.parser.ParsedKernel;
+import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
+import org.yah.tools.opencl.codegen.parser.ParsedProgram;
 
 public interface NamingStrategy {
 

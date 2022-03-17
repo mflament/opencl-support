@@ -3,9 +3,8 @@ package org.yah.tools.opencl.codegen.model.kernel.methods;
 import org.yah.tools.opencl.codegen.model.kernel.AsyncKernelMethod;
 import org.yah.tools.opencl.codegen.model.kernel.KernelMethodParameter;
 import org.yah.tools.opencl.codegen.model.kernel.KernelModel;
-import org.yah.tools.opencl.codegen.model.kernel.param.BufferProperties;
 import org.yah.tools.opencl.codegen.model.kernel.param.EventBuffer;
-import org.yah.tools.opencl.codegen.parser.model.ParsedKernelArgument;
+import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
 
 import java.util.Optional;
 

@@ -1,7 +1,7 @@
-kernel void sum(global const int* a,
-                global const int* b,
-                global int* results,
-                int length)
+kernel void mySum(global const T* a,
+                  global const T* b,
+                  global T* results,
+                  int length)
 {
     int global_id = get_global_id(0);
     if (global_id < length)

@@ -1,6 +1,6 @@
 package org.yah.tools.opencl.codegen.parser.clinfo;
 
-import org.yah.tools.opencl.codegen.parser.model.attribute.*;
+import org.yah.tools.opencl.codegen.parser.attribute.*;
 
 import java.util.Objects;
 import java.util.regex.Matcher;

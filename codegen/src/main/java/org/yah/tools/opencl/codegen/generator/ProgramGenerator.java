@@ -8,8 +8,7 @@ import org.yah.tools.opencl.codegen.model.ProgramModelBuilder;
 import org.yah.tools.opencl.codegen.model.kernel.KernelModel;
 import org.yah.tools.opencl.codegen.model.program.ProgramModel;
 import org.yah.tools.opencl.codegen.parser.ProgramParser;
-import org.yah.tools.opencl.codegen.parser.clinfo.DefaultProgramParser;
-import org.yah.tools.opencl.codegen.parser.model.ParsedProgram;
+import org.yah.tools.opencl.codegen.parser.ParsedProgram;
 import org.yah.tools.opencl.program.CLProgram;
 
 import javax.annotation.Nullable;
@@ -36,7 +35,7 @@ public class ProgramGenerator {
         if (basePackage.length() == 0)
             throw new IllegalArgumentException("empty package name");
 
-        ProgramParser parser = new DefaultProgramParser();
+        ProgramParser parser = new ProgramParser();
         ParsedProgram parsedProgram = parser.parse(program, programPath);
         ProgramModelBuilder modelBuilder = new ProgramModelBuilder(namingStrategy, false);
         ProgramModel programModel = modelBuilder.build(basePackage, parsedProgram);

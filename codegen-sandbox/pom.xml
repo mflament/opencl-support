@@ -35,6 +35,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.yah.tools.opencl</groupId>
+            <artifactId>codegen</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <scope>runtime</scope>
@@ -66,16 +72,51 @@
                 <artifactId>opencl-support-maven-plugin</artifactId>
                 <version>${opencl-support.version}</version>
                 <executions>
+
                     <execution>
-                        <id>generate-cl-bindings</id>
+                        <id>generate-cl-sum-int</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <basePackage>org.yah.opencl.test.programs</basePackage>
+                            <includes>
+                                <include>sum.cl</include>
+                            </includes>
+                            <compilerOptions>-D T=int</compilerOptions>
+                            <nameSuffix>Int</nameSuffix>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>generate-cl-sum-float</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>sum.cl</include>
+                            </includes>
+                            <compilerOptions>-D T=float</compilerOptions>
+                            <nameSuffix>Float</nameSuffix>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>generate-cl-sqrt</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>sqrt.cl</include>
+                            </includes>
                         </configuration>
                     </execution>
                 </executions>
+
+                <configuration>
+                    <basePackage>org.yah.opencl.test.programs</basePackage>
+                </configuration>
             </plugin>
 
             <plugin>
