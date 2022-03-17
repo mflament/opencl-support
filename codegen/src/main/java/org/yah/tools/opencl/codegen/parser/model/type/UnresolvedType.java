@@ -22,16 +22,6 @@ public class UnresolvedType implements CLType {
     }
 
     @Override
-    public Class<?> getValueClass() {
-        throw new UnsupportedOperationException("No value type for UnresolvedType");
-    }
-
-    @Override
-    public Class<?> getBufferClass() {
-        return ByteBuffer.class;
-    }
-
-    @Override
     public String toString() {
         return "CLUnresolvedType{" +
                 "name='" + name + '\'' +

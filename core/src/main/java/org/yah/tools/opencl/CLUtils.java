@@ -3,15 +3,11 @@ package org.yah.tools.opencl;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 
-import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
-import java.nio.LongBuffer;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public final class CLUtils {
-
-    public static final String CLASSPATH_PREFIX = "classpath:";
 
     private CLUtils() {
     }
@@ -78,25 +74,6 @@ public final class CLUtils {
         ByteBuffer byteBuffer = BufferUtils.createByteBuffer((int) sizeBuffer.get(0));
         CLException.check(readParam.accept(byteBuffer));
         return byteBuffer;
-    }
-
-    public static String resourcePath(String file) {
-        if (!file.startsWith(CLASSPATH_PREFIX))
-            return CLASSPATH_PREFIX + file;
-        return file;
-    }
-
-    @Nullable
-    public static String getResourcePath(String file) {
-        if (file.startsWith(CLASSPATH_PREFIX))
-            return file.substring(CLASSPATH_PREFIX.length());
-        return null;
-    }
-
-    public static String getPath(String file) {
-        if (file.startsWith(CLASSPATH_PREFIX))
-            return file.substring(CLASSPATH_PREFIX.length());
-        return file;
     }
 
     @FunctionalInterface

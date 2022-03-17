@@ -10,9 +10,6 @@ import java.util.function.Function;
 
 public final class CLTestSupport {
 
-    public static final Path BASE_DIR = Paths.get("src/test/resources");
-    public static final Path PROGRAM_PATH = Paths.get("src/test/resources/cl/test.cl");
-
     private CLTestSupport() {
     }
 

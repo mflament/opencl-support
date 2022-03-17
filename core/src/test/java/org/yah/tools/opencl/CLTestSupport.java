@@ -1,6 +1,7 @@
 package org.yah.tools.opencl;
 
 import org.yah.tools.opencl.context.CLContext;
+import org.yah.tools.opencl.program.CLCompilerOptions;
 import org.yah.tools.opencl.program.CLProgram;
 
 import java.util.function.Consumer;
@@ -14,7 +15,7 @@ public final class CLTestSupport {
     public static void runWithProgram(String resource, Consumer<CLProgram> test) {
         runWithProgram(context -> context.programBuilder()
                 .withResource(resource)
-                .withOptions("-cl-kernel-arg-info")
+                .withCompilerOptions(new CLCompilerOptions().withoutKernelArgInfo())
                 .build(), test);
     }
 

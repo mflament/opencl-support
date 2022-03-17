@@ -17,6 +17,10 @@
         <url>https://github.com/mflament</url>
     </organization>
 
+    <properties>
+        <maven.itf.version>0.11.0</maven.itf.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.yah.tools.opencl</groupId>
@@ -37,19 +41,18 @@
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-project</artifactId>
             <version>2.2.1</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
-            <version>3.8.1</version>
+            <version>3.8.4</version>
             <scope>provided</scope>
         </dependency>
-
-        <!-- dependencies to annotations -->
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
             <artifactId>maven-plugin-annotations</artifactId>
-            <version>3.6.2</version>
+            <version>3.6.4</version>
             <scope>provided</scope>
         </dependency>
 
@@ -63,9 +66,39 @@
             <artifactId>logback-classic</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.soebes.itf.jupiter.extension</groupId>
+            <artifactId>itf-extension-maven</artifactId>
+            <version>${maven.itf.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.soebes.itf.jupiter.extension</groupId>
+            <artifactId>itf-jupiter-extension</artifactId>
+            <version>${maven.itf.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.soebes.itf.jupiter.extension</groupId>
+            <artifactId>itf-assertj</artifactId>
+            <version>${maven.itf.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
+
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>false</filtering>
+            </testResource>
+            <testResource>
+                <directory>src/test/resources-its</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -75,6 +108,42 @@
                     <generateProjectInfo>false</generateProjectInfo>
                     <generateReports>true</generateReports>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.soebes.itf.jupiter.extension</groupId>
+                <artifactId>itf-maven-plugin</artifactId>
+                <version>${maven.itf.version}</version>
+                <executions>
+                    <execution>
+                        <id>installing</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>install</goal>
+                            <goal>resources-its</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <systemProperties>
+                        <maven.version>${maven.version}</maven.version>
+                        <maven.home>${maven.home}</maven.home>
+                    </systemProperties>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -164,36 +233,6 @@
                     <scope>runtime</scope>
                 </dependency>
             </dependencies>
-        </profile>
-
-        <profile>
-            <id>it</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-invoker-plugin</artifactId>
-                        <version>3.2.2</version>
-                        <configuration>
-                            <projectsDirectory>src/it</projectsDirectory>
-                            <goal>generate-sources</goal>
-                            <showErrors>true</showErrors>
-                            <debug>false</debug>
-                            <pomIncludes>
-                                <pomInclude>**/pom.xml</pomInclude>
-                            </pomIncludes>
-                            <postBuildHookScript>verify</postBuildHookScript>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
 
     </profiles>

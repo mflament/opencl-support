@@ -8,7 +8,7 @@ import javax.annotation.Nullable;
 import java.nio.LongBuffer;
 import java.util.Collection;
 
-public final class NDRange extends CLEventsBuffer {
+public final class NDRange {
 
     private final int dimensions;
     private final PointerBuffer globalWorkSizesBuffer;

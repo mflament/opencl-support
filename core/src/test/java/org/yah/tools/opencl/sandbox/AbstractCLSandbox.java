@@ -4,7 +4,7 @@ import org.lwjgl.BufferUtils;
 import org.yah.tools.opencl.Closables;
 import org.yah.tools.opencl.cmdqueue.CLCommandQueue;
 import org.yah.tools.opencl.context.CLContext;
-import org.yah.tools.opencl.enums.BufferProperties;
+import org.yah.tools.opencl.enums.BufferProperty;
 import org.yah.tools.opencl.mem.CLBuffer;
 import org.yah.tools.opencl.program.CLProgram;
 
@@ -39,11 +39,11 @@ public abstract class AbstractCLSandbox implements AutoCloseable {
         return managedResources.add(closable);
     }
 
-    protected final CLBuffer mem(FloatBuffer buffer, BufferProperties... properties) {
+    protected final CLBuffer mem(FloatBuffer buffer, BufferProperty... properties) {
         return context.buildBuffer().withProperties(properties).build(buffer);
     }
 
-    protected final CLBuffer mem(int capacity, BufferProperties... properties) {
+    protected final CLBuffer mem(int capacity, BufferProperty... properties) {
         return context.buildBuffer().withProperties(properties).build(capacity);
     }
 

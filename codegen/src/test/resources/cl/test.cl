@@ -18,5 +18,5 @@ kernel __attribute__((work_group_size_hint(1, 1, 1))) void second_kernel(
                           private int2 arg3) {
 }
 
-kernel void third_kernel(global const TestStruct* pts, int* i, TestStruct ts) {
+kernel void third_kernel(global const TestStruct* pts, TestStruct ts) {
 }

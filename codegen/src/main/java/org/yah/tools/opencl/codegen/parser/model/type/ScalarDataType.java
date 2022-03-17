@@ -52,7 +52,6 @@ public enum ScalarDataType implements CLType {
         return this;
     }
 
-    @Override
     public Class<?> getValueClass() {
         switch (this) {
             case BOOL:
@@ -84,8 +83,6 @@ public enum ScalarDataType implements CLType {
         }
     }
 
-    @Nullable
-    @Override
     public Class<?> getBufferClass() {
         switch (this) {
             case SHORT:
@@ -94,7 +91,7 @@ public enum ScalarDataType implements CLType {
                 return ShortBuffer.class;
             case INT:
             case UINT:
-                return Integer.TYPE;
+                return IntBuffer.class;
             case LONG:
             case ULONG:
                 return LongBuffer.class;
@@ -124,11 +121,11 @@ public enum ScalarDataType implements CLType {
                 return 4;
             case LONG:
             case ULONG:
+            case DOUBLE:
             case SIZE_T:
             case PTRDIFF_T:
             case INTPTR_T:
             case UINTPTR_T:
-            case DOUBLE:
                 return 8;
             default:
                 return 1;

@@ -8,7 +8,7 @@ import org.yah.tools.opencl.mem.CLBuffer;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 
-import static org.yah.tools.opencl.enums.BufferProperties.*;
+import static org.yah.tools.opencl.enums.BufferProperty.*;
 
 /**
  * @author Yah
@@ -39,14 +39,14 @@ public class VectorSum extends AbstractCLSandbox {
         CLKernel kernel = program.newKernel("sum");
         NDRange range = new NDRange(1);
         range.globalWorkSize(workItems).localWorkSize(workGroupSize);
-        range.requestEvent();
+
         kernel.setArg(0, cl_values);
         kernel.setArg(1, cl_results);
         kernel.setArg(2, count);
         kernel.setArg(3, workGroupSize * Float.BYTES);
 
-        long event = commandQueue.run(kernel, range);
-        commandQueue.waitForEvent(event);
+        commandQueue.run(kernel, range);
+
         commandQueue.read(cl_results, results);
         commandQueue.finish();
 
@@ -71,7 +71,7 @@ public class VectorSum extends AbstractCLSandbox {
         return res;
     }
 
-    private static void test(int size) throws IOException {
+    private static void test(int size) {
         try (VectorSum vs = new VectorSum(size)) {
             float ssum = vs.cpusum(1);
             float psum = vs.cpusum(getAvailableProcessors());
@@ -85,7 +85,7 @@ public class VectorSum extends AbstractCLSandbox {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         //int size = 268435456; // 1 Gb of floats
         int size = 10; // 1 Gb of floats
         //benchmark(size);

@@ -23,8 +23,9 @@
         <maven.compiler.target>8</maven.compiler.target>
         <maven.compiler.release>8</maven.compiler.release>
         <checkerframework.version>3.3.0</checkerframework.version>
-        <lwjgl.version>3.3.1-SNAPSHOT</lwjgl.version>
+        <lwjgl.version>3.3.1</lwjgl.version>
         <javaparser.version>3.24.0</javaparser.version>
+        <junit-jupiter.version>5.7.2</junit-jupiter.version>
     </properties>
 
     <scm>
@@ -65,6 +66,7 @@
                 <artifactId>cl-test-support</artifactId>
                 <version>${project.version}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.yah.tools.opencl</groupId>
                 <artifactId>opencl-support-maven-plugin</artifactId>
@@ -103,25 +105,11 @@
             </dependency>
 
             <dependency>
-                <groupId>org.apache.maven</groupId>
-                <artifactId>maven-core</artifactId>
-                <version>3.8.4</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.maven</groupId>
-                <artifactId>maven-compat</artifactId>
-                <version>3.8.4</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-api</artifactId>
-                <version>5.8.2</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.maven.plugin-testing</groupId>
-                <artifactId>maven-plugin-testing-harness</artifactId>
-                <version>3.3.0</version>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit-jupiter.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -145,9 +133,23 @@
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.0.0-M5</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter-engine</artifactId>
+                            <version>${junit-jupiter.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-plugin-plugin</artifactId>
                     <version>3.6.4</version>
                 </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
@@ -156,6 +158,7 @@
                         <skip>true</skip>
                     </configuration>
                 </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-project-info-reports-plugin</artifactId>

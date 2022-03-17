@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
-import org.yah.tools.opencl.enums.BufferProperties;
+import org.yah.tools.opencl.enums.BufferProperty;
 
 /**
  * @author Yah
@@ -21,14 +21,14 @@ public class CLSubBuffer implements CLMemObject {
 
     private final PointerBuffer pointerBuffer;
 
-    public CLSubBuffer(CLBuffer buffer, long offset, long size, BufferProperties... properties) {
+    public CLSubBuffer(CLBuffer buffer, long offset, long size, BufferProperty... properties) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             ByteBuffer bufferCreateInfo = stack.malloc(2 * PointerBuffer.POINTER_SIZE);
             PointerBuffer.put(bufferCreateInfo, offset);
             PointerBuffer.put(bufferCreateInfo, size);
             bufferCreateInfo.flip();
             id = apply(
-                    eb -> clCreateSubBuffer(buffer.getId(), BufferProperties.combine(properties),
+                    eb -> clCreateSubBuffer(buffer.getId(), BufferProperty.combine(properties),
                             CL_BUFFER_CREATE_TYPE_REGION,
                             bufferCreateInfo, eb));
             pointerBuffer = BufferUtils.createPointerBuffer(1);

@@ -40,16 +40,6 @@ public class VectorType implements CLType {
         return scalarDataType;
     }
 
-    @Override
-    public Class<?> getValueClass() {
-        return scalarDataType.getBufferClass();
-    }
-
-    @Override
-    public Class<?> getBufferClass() {
-        return scalarDataType.getBufferClass();
-    }
-
     @Nullable
     public static VectorType resolve(String name) {
         Matcher matcher = NAME_REGEX.matcher(name);

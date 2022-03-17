@@ -4,10 +4,6 @@ public interface CLType {
 
     String getName();
 
-    Class<?> getValueClass();
-
-    Class<?> getBufferClass();
-
     default boolean isScalar() {
         return false;
     }
@@ -24,11 +20,11 @@ public interface CLType {
         throw new UnsupportedOperationException("not a vector " + this);
     }
 
-    default boolean isOther() {
+    default boolean isMemObjectType() {
         return false;
     }
 
-    default OtherDataType asOther() {
+    default MemObjectType asMemObjectType() {
         throw new UnsupportedOperationException("not an other data type " + this);
     }
 

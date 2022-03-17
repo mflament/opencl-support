@@ -11,7 +11,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.yah.tools.opencl.enums.KernelArgAccessQualifier.READ_ONLY;
 import static org.yah.tools.opencl.enums.KernelArgAddressQualifier.GLOBAL;
 import static org.yah.tools.opencl.enums.KernelArgTypeQualifier.CONST;
 

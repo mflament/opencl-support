@@ -14,6 +14,7 @@ import org.yah.tools.opencl.enums.deviceinfo.DeviceInfo;
 import org.yah.tools.opencl.kernel.CLKernel;
 import org.yah.tools.opencl.platform.CLDevice;
 
+import javax.annotation.Nullable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,8 +33,32 @@ import static org.yah.tools.opencl.CLException.apply;
 import static org.yah.tools.opencl.CLException.check;
 
 public class CLProgram implements CLObject {
+
+    public static final String CLASSPATH_PREFIX = "classpath:";
+
+    public static String addResourcePathPrefix(String file) {
+        if (!file.startsWith(CLASSPATH_PREFIX))
+            return CLASSPATH_PREFIX + file;
+        return file;
+    }
+
+    @Nullable
+    public static String getResourcePath(String file) {
+        if (file.startsWith(CLASSPATH_PREFIX))
+            return file.substring(CLASSPATH_PREFIX.length());
+        return null;
+    }
+
+    public static String getProgramPath(String file) {
+        if (file.startsWith(CLASSPATH_PREFIX))
+            file = file.substring(CLASSPATH_PREFIX.length());
+        return CLUtils.toStandardPath(file);
+    }
+
+
     private final long id;
     private final CLContext context;
+    private final CLCompilerOptions compilerOptions;
     private final List<CLDevice> devices;
     private final int maxDimensions;
 
@@ -41,17 +66,23 @@ public class CLProgram implements CLObject {
         this.id = from.id;
         this.context = from.context;
         this.devices = from.devices;
+        this.compilerOptions = new CLCompilerOptions(from.compilerOptions);
         this.maxDimensions = from.maxDimensions;
     }
 
-    private CLProgram(long id, CLContext context) {
+    private CLProgram(long id, CLContext context, CLCompilerOptions compilerOptions) {
         this.id = id;
         this.context = context;
         this.devices = getProgramDevices(id, context);
+        this.compilerOptions = new CLCompilerOptions(compilerOptions);
         maxDimensions = devices.stream()
                 .mapToInt(device -> device.getDeviceInfo(DeviceInfo.DEVICE_MAX_WORK_ITEM_DIMENSIONS))
                 .min()
                 .orElse(0);
+    }
+
+    public CLCompilerOptions getCompilerOptions() {
+        return compilerOptions;
     }
 
     public CLContext getContext() {
@@ -152,14 +183,19 @@ public class CLProgram implements CLObject {
         private final CLContext context;
         private final List<CLDevice> devices = new ArrayList<>();
         private final List<String> sources = new ArrayList<>();
-        private String options;
+        private CLCompilerOptions compilerOptions;
 
         public Builder(CLContext context) {
             this.context = Objects.requireNonNull(context, "context is null");
         }
 
-        public Builder withOptions(String options) {
-            this.options = options;
+        public Builder withCompilerOptions(String options) {
+            this.compilerOptions = CLCompilerOptions.parse(options);
+            return this;
+        }
+
+        public Builder withCompilerOptions(@Nullable CLCompilerOptions options) {
+            this.compilerOptions = options;
             return this;
         }
 
@@ -168,12 +204,18 @@ public class CLProgram implements CLObject {
             return this;
         }
 
-        public Builder withDevice(CLDevice device) {
+        public Builder addDevice(CLDevice device) {
             devices.add(device);
             return this;
         }
 
+        public Builder withDevice(CLDevice device) {
+            devices.clear();
+            return addDevice(device);
+        }
+
         public Builder withDevices(Collection<CLDevice> devices) {
+            this.devices.clear();
             this.devices.addAll(devices);
             return this;
         }
@@ -184,7 +226,7 @@ public class CLProgram implements CLObject {
         }
 
         public Builder withResource(String resource) {
-            withFile(CLUtils.resourcePath(resource));
+            withFile(addResourcePathPrefix(resource));
             return this;
         }
 
@@ -199,11 +241,13 @@ public class CLProgram implements CLObject {
                 device_list.put(device.getId());
             device_list.flip();
 
-            if (options == null) options = "";
-            int buildret = clBuildProgram(id, device_list, options, null, 0);
+            if (compilerOptions == null)
+                compilerOptions = new CLCompilerOptions();
+
+            int buildret = clBuildProgram(id, device_list, compilerOptions.toString(), null, 0);
             if (buildret != CL_SUCCESS)
                 throw new CLBuildException(buildret, createLog(id, programDevices));
-            return new CLProgram(id, context);
+            return new CLProgram(id, context, compilerOptions);
         }
 
         private String createLog(long programId, List<CLDevice> devices) {
@@ -241,7 +285,7 @@ public class CLProgram implements CLObject {
         }
 
         private static InputStream openStream(String file) throws IOException {
-            String resourcePath = CLUtils.getResourcePath(file);
+            String resourcePath = getResourcePath(file);
             if (resourcePath != null) {
                 ClassLoader classLoader = CLProgram.class.getClassLoader();
                 URL url = classLoader.getResource(resourcePath);

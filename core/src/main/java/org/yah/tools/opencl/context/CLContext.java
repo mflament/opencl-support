@@ -69,24 +69,11 @@ public class CLContext implements CLObject {
     }
 
     public CLProgram.Builder programBuilder() {
-        return programBuilder(devices);
-    }
-
-    public CLProgram.Builder programBuilder(List<CLDevice> devices) {
-        checkDevices(devices);
-        return CLProgram.builder(this).withDevices(devices);
+        return CLProgram.builder(this);
     }
 
     public CLCommandQueue.Builder buildCommandQueue() {
-        return buildCommandQueue(null);
-    }
-
-    public CLCommandQueue.Builder buildCommandQueue(@Nullable CLDevice device) {
-        if (device != null)
-            checkDevice(device);
-        else
-            device = devices.get(0);
-        return CLCommandQueue.builder(this, device);
+        return CLCommandQueue.builder(this);
     }
 
     public CLBuffer.Builder buildBuffer() {
@@ -98,11 +85,11 @@ public class CLContext implements CLObject {
         clReleaseContext(id);
     }
 
-    private void checkDevices(List<CLDevice> devices) {
+    public void checkDevices(List<CLDevice> devices) {
         devices.forEach(this::checkDevice);
     }
 
-    private void checkDevice(CLDevice device) {
+    public void checkDevice(CLDevice device) {
         if (!this.devices.contains(device))
             throw new IllegalArgumentException("device " + device + " is not in context " + id);
     }
