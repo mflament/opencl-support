@@ -9,20 +9,20 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ParsedKernel {
-    private final ParsedProgram program;
+    private final ParsedProgram parsedProgram;
     private final String name;
     private final List<ParsedAttribute> attributes;
     private final List<ParsedKernelArgument> arguments;
 
-    ParsedKernel(ParsedProgram program, String name, List<ParsedAttribute> attributes, List<ParsedKernelArgument> arguments) {
-        this.program = Objects.requireNonNull(program, "program is null");
+    ParsedKernel(ParsedProgram parsedProgram, String name, List<ParsedAttribute> attributes, List<ParsedKernelArgument> arguments) {
+        this.parsedProgram = Objects.requireNonNull(parsedProgram, "program is null");
         this.name = Objects.requireNonNull(name, "name is null");
         this.attributes = CLUtils.copyOf(Objects.requireNonNull(attributes, "attributes is null"));
         this.arguments = CLUtils.copyOf(Objects.requireNonNull(arguments, "arguments is null"));
     }
 
-    public ParsedProgram getProgram() {
-        return program;
+    public ParsedProgram getParsedProgram() {
+        return parsedProgram;
     }
 
     public String getName() {

@@ -10,8 +10,6 @@ public interface MethodParameterModel {
 
     String getParameterName();
 
-    Class<?> getParameterType();
-
     @Nullable
     default String getDefaultValue() {
         return null;

@@ -3,10 +3,9 @@ package org.yah.tools.opencl.program;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.yah.tools.opencl.program.CLCompilerOptions.Macro;
 
 class CLCompilerOptionsTest {
 
@@ -32,13 +31,10 @@ class CLCompilerOptionsTest {
                 "-Werror " +
                 "-cl-std=CL1.2");
 
-        List<Macro> macros = options.getMacros();
+        Map<String, String> macros = options.getMacros();
         assertThat(macros).hasSize(2);
-        assertThat(macros.get(0).getName()).isEqualTo("novalue");
-        assertThat(macros.get(0).getValue()).isNull();
-
-        assertThat(macros.get(1).getName()).isEqualTo("withvalue");
-        assertThat(macros.get(1).getValue()).isEqualTo("thevalue");
+        assertThat(macros).containsEntry("novalue", null);
+        assertThat(macros).containsEntry("withvalue", "thevalue");
 
         assertThat(options.getIncludes()).isEqualTo(Arrays.asList("some/dir", "some/other/dir"));
 

@@ -8,9 +8,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.yah.tools.opencl.CLUtils;
-import org.yah.tools.opencl.codegen.DefaultNamingStrategy;
-import org.yah.tools.opencl.codegen.NamingStrategy;
 import org.yah.tools.opencl.codegen.generator.ProgramGenerator;
+import org.yah.tools.opencl.codegen.TypeParametersConfig;
 import org.yah.tools.opencl.context.CLContext;
 import org.yah.tools.opencl.program.CLCompilerOptions;
 import org.yah.tools.opencl.program.CLProgram;
@@ -21,12 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-
-import static org.yah.tools.opencl.codegen.DefaultNamingStrategy.TypeNameDecorator;
+import java.util.*;
 
 /**
  * Generate opencl programs binding
@@ -36,9 +30,9 @@ public class GenerateBindingMojo extends AbstractMojo {
 
     private static final String SYSTEM_PROPERTY_PREFIX = "clbindings.";
 
-    private static final String DEFAULT_SOURCE_DIRECTORY = "src/main/resources";
-
     private static final String DEFAULT_INCLUDE = "**/*.cl";
+
+    private static final String DEFAULT_SOURCE_DIRECTORY = "src/main/resources";
 
     public static final String DEFAULT_OUTPUT_DIRECTORY = "target/generated-sources/opencl-support";
 
@@ -60,65 +54,68 @@ public class GenerateBindingMojo extends AbstractMojo {
      * Base package of generated program classs.
      * If not set, relative file path from resourcePath will be used.
      */
-    @Parameter(property = SYSTEM_PROPERTY_PREFIX + "basePackage")
-    private String basePackage;
+    @Parameter
+    public String basePackage;
 
     /**
      * Included files ant pattern.
      */
-    @Parameter(defaultValue = DEFAULT_INCLUDE, property = SYSTEM_PROPERTY_PREFIX + "includes")
-    private List<String> includes;
+    @Parameter
+    public List<String> includes = Collections.singletonList(DEFAULT_INCLUDE);
 
     /**
      * Excluded files ant pattern.
      */
-    @Parameter(property = SYSTEM_PROPERTY_PREFIX + "excludes")
-    private List<String> excludes;
+    @Parameter
+    public List<String> excludes;
 
     /**
      * build program options
      */
-    @Parameter(property = SYSTEM_PROPERTY_PREFIX + "programOptions")
-    private String compilerOptions;
+    @Parameter
+    public String compilerOptions;
 
     /**
      * prefix added to both program and kernel name
      */
     @Parameter
-    private String namePrefix;
+    public String namePrefix;
 
     /**
      * suffix added to both program and kernel name
      */
     @Parameter
-    private String nameSuffix;
+    public String nameSuffix;
 
     /**
      * prefix added to program name
      */
     @Parameter
-    private String programNamePrefix;
+    public String programNamePrefix;
 
     /**
      * suffix added to program name
      */
     @Parameter
-    private String programNameSuffix;
+    public String programNameSuffix;
 
     /**
      * prefix added to program name
      */
     @Parameter
-    private String kernelNamePrefix;
+    public String kernelNamePrefix;
 
     /**
      * suffix added to program name
      */
     @Parameter
-    private String kernelNameSuffix;
+    public String kernelNameSuffix;
 
     @Parameter(defaultValue = "${project}", readonly = true)
     private MavenProject project;
+
+    @Parameter
+    private List<Binding> bindings;
 
     private final AntPathMatcherArrays pathMatcher = new AntPathMatcherArrays.Builder().build();
 
@@ -126,18 +123,24 @@ public class GenerateBindingMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        NamingStrategy namingStrategy = createNamingStrategy();
+
         Path sourcePath = resolvePath(sourceDirectory, DEFAULT_SOURCE_DIRECTORY);
         if (!Files.exists(sourcePath)) {
             getLog().info("source directory " + sourcePath + " not found");
             return;
         }
 
-        try (BindingGenerator bindingGenerator = new BindingGenerator(sourcePath, namingStrategy)) {
-            bindingGenerator.generateBindings();
-            String sourceRoot = CLUtils.toStandardPath(bindingGenerator.outputPath.toString());
-            getLog().info("Adding " + sourceRoot + " to source roots");
-            project.addCompileSourceRoot(sourceRoot);
+        if (bindings == null || bindings.isEmpty()) {
+            bindings = Collections.singletonList(new Binding(this));
+        }
+
+        for (Binding config : bindings) {
+            try (BindingGenerator bindingGenerator = new BindingGenerator(sourcePath, config)) {
+                bindingGenerator.generateBindings();
+                String sourceRoot = CLUtils.toStandardPath(bindingGenerator.outputPath.toString());
+                getLog().info("Adding " + sourceRoot + " to source roots");
+                project.addCompileSourceRoot(sourceRoot);
+            }
         }
     }
 
@@ -148,15 +151,17 @@ public class GenerateBindingMojo extends AbstractMojo {
     }
 
     private class BindingGenerator implements AutoCloseable {
+        private final Binding config;
         private final Path sourcePath;
         private final Path outputPath;
         private final CLContext context;
         private final ProgramGenerator programGenerator;
 
-        public BindingGenerator(Path sourcePath, NamingStrategy namingStrategy) {
+        public BindingGenerator(Path sourcePath, Binding config) {
             this.sourcePath = Objects.requireNonNull(sourcePath, "sourcePath is null");
+            this.config = Objects.requireNonNull(config, "config is null");
             outputPath = resolvePath(outputDirectory, DEFAULT_OUTPUT_DIRECTORY);
-            programGenerator = new ProgramGenerator(outputPath, namingStrategy);
+            programGenerator = new ProgramGenerator(outputPath, config.createNamingStrategy());
             context = CLContext.builder().build();
         }
 
@@ -166,7 +171,6 @@ public class GenerateBindingMojo extends AbstractMojo {
         }
 
         public void generateBindings() throws MojoExecutionException {
-            getLog().info("Scanning directory " + sourcePath + " for cl files");
             List<String> relativePaths = collectFiles();
             for (String relativePath : relativePaths) {
                 generateBindings(relativePath);
@@ -177,8 +181,9 @@ public class GenerateBindingMojo extends AbstractMojo {
             getLog().info("Generating binding for " + relativePath);
             String programPath = "classpath:" + relativePath;
             try (CLProgram program = loadProgram(relativePath)) {
+                TypeParametersConfig typeParameters = TypeParametersConfig.builder().build();
                 try {
-                    programGenerator.generate(program, programPath, getBasePackage(relativePath));
+                    programGenerator.generate(program, programPath, getBasePackage(relativePath), typeParameters);
                 } catch (IOException e) {
                     throw new MojoExecutionException("Error generating bindings for " + relativePath, e);
                 }
@@ -204,11 +209,13 @@ public class GenerateBindingMojo extends AbstractMojo {
         }
 
         private boolean acceptFile(String relativePath) {
-            if (excludes == null && includes == null)
+            List<String> inc = config.includes != null ? config.includes : includes;
+            List<String> exc = config.excludes != null ? config.excludes : excludes;
+            if (inc == null && exc == null)
                 return true;
-            if (excludes != null && match(relativePath, excludes))
+            if (exc != null && match(relativePath, exc))
                 return false;
-            return includes == null || match(relativePath, includes);
+            return inc == null || match(relativePath, inc);
         }
 
         private boolean match(String relativePath, List<String> patterns) {
@@ -216,41 +223,27 @@ public class GenerateBindingMojo extends AbstractMojo {
         }
 
         private CLProgram loadProgram(String relativePath) {
+            String options = config.compilerOptions != null ? config.compilerOptions : compilerOptions;
             return context.programBuilder()
-                    .withCompilerOptions(CLCompilerOptions.parse(compilerOptions).withKernelArgInfo())
+                    .withCompilerOptions(CLCompilerOptions.parse(options).withKernelArgInfo())
                     .withFile(sourcePath.resolve(relativePath).toString())
                     .build();
         }
 
         private String getBasePackage(String relativePath) throws MojoExecutionException {
             String[] names = relativePath.split("/");
-            if (basePackage == null && names.length <= 1) {
+            String bp = config.basePackage != null ? config.basePackage : basePackage;
+            if (bp == null && names.length <= 1) {
                 throw new MojoExecutionException(this, "No package resolved for '" + relativePath + "'",
                         "Use the basicPackage parameter or place the cl programs in nested directory");
             }
             List<String> res = new ArrayList<>(names.length);
-            if (basePackage != null)
-                res.add(basePackage);
+            if (bp != null)
+                res.add(bp);
             for (int i = 0; i < names.length - 1; i++)
                 res.add(names[i]);
             return String.join(".", res);
         }
 
     }
-
-    private NamingStrategy createNamingStrategy() {
-        TypeNameDecorator programDecorator = createNameDecorator(programNamePrefix, programNameSuffix);
-        TypeNameDecorator kernelDecorator = createNameDecorator(kernelNamePrefix, kernelNameSuffix);
-        if (programDecorator != null || kernelDecorator != null)
-            return new DefaultNamingStrategy(programDecorator, kernelDecorator);
-        return DefaultNamingStrategy.get();
-    }
-
-    private TypeNameDecorator createNameDecorator(String prefix, String suffix) {
-        if (prefix == null) prefix = namePrefix;
-        if (suffix == null) suffix = nameSuffix;
-        if (prefix != null || suffix != null) return new TypeNameDecorator(prefix, suffix);
-        return null;
-    }
-
 }

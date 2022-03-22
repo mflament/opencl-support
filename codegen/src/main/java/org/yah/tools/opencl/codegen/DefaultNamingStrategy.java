@@ -38,7 +38,7 @@ public class DefaultNamingStrategy implements NamingStrategy {
 
     private static final DefaultNamingStrategy INSTANCE = new DefaultNamingStrategy(null, null);
 
-    private static final String[] VECTOR_ARGS_NAME = {"x", "y", "z", "w"};
+    private static final String[] VECTOR_COMPONENT_NAMES = {"x", "y", "z", "w"};
 
     public static NamingStrategy get() {
         return INSTANCE;
@@ -102,7 +102,7 @@ public class DefaultNamingStrategy implements NamingStrategy {
         } else if (method.isCreateBuffer()) {
             ParsedKernelArgument parsedKernelArgument = method.asKernelArgumentMethod().getParsedKernelArgument();
             name = "create" + camelCase(parsedKernelArgument.getArgName(), true);
-        } else if (method.isSetValue()) {
+        } else if (method.isSetValue() || method.isSetValueComponent()) {
             ParsedKernelArgument parsedKernelArgument = method.asKernelArgumentMethod().getParsedKernelArgument();
             name = "set" + camelCase(parsedKernelArgument.getArgName(), true);
         } else if (method.isInvoke()) {
@@ -146,12 +146,11 @@ public class DefaultNamingStrategy implements NamingStrategy {
         if (methodParameter.isBufferProperties())
             return "bufferProperties";
 
-        if (methodParameter.isValue()) {
-            int size = methodParameter.getMethod().getParameters().size();
-            if (size == 1)
-                return "value";
-            return VECTOR_ARGS_NAME[methodParameter.getParameterIndex()];
-        }
+        if (methodParameter.isValue())
+            return "value";
+
+        if (methodParameter.isValueComponent())
+            return VECTOR_COMPONENT_NAMES[methodParameter.getParameterIndex()];
 
         throw new IllegalArgumentException("Invalid parameter " + methodParameter.getClass().getName());
     }

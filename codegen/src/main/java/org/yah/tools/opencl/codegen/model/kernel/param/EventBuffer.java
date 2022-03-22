@@ -1,11 +1,11 @@
 package org.yah.tools.opencl.codegen.model.kernel.param;
 
-import org.lwjgl.PointerBuffer;
 import org.yah.tools.opencl.codegen.model.kernel.KernelMethod;
 
 public class EventBuffer extends AbstractKernelMethodParameter {
+
     public EventBuffer(KernelMethod kernelMethod, int parameterIndex) {
-        super(kernelMethod, parameterIndex, PointerBuffer.class, "null");
+        super(kernelMethod, parameterIndex, "null");
     }
 
     @Override

@@ -18,22 +18,18 @@ public class ParsedKernelArgument {
 
     private final int argIndex;
     private final String argName;
-    private final String typeName;
     private final CLType type;
-    private final boolean isPointer;
     private final KernelArgAddressQualifier addressQualifier;
     private final KernelArgAccessQualifier accessQualifier;
     private final CLBitfield<KernelArgTypeQualifier> typeQualifiers;
 
-    private ParsedKernelArgument(int argIndex, String argName, String typeName, CLType type,
-                                 boolean isPointer, KernelArgAddressQualifier addressQualifier,
+    private ParsedKernelArgument(int argIndex, String argName, CLType type,
+                                 KernelArgAddressQualifier addressQualifier,
                                  KernelArgAccessQualifier accessQualifier,
                                  CLBitfield<KernelArgTypeQualifier> typeQualifiers) {
         this.argIndex = argIndex;
         this.argName = Objects.requireNonNull(argName, "argName is null");
-        this.typeName = Objects.requireNonNull(typeName, "typeName is null");
         this.type = Objects.requireNonNull(type, "type is null");
-        this.isPointer = isPointer;
         this.addressQualifier = Objects.requireNonNull(addressQualifier, "addressQualifier is null");
         this.accessQualifier = Objects.requireNonNull(accessQualifier, "accessQualifier is null");
         this.typeQualifiers = Objects.requireNonNull(typeQualifiers, "typeQualifiers is null");
@@ -45,10 +41,6 @@ public class ParsedKernelArgument {
 
     public String getArgName() {
         return argName;
-    }
-
-    public String getTypeName() {
-        return typeName;
     }
 
     public CLType getType() {
@@ -67,13 +59,9 @@ public class ParsedKernelArgument {
         return typeQualifiers.values();
     }
 
-    public boolean isPointer() {
-        return isPointer;
-    }
-
     public boolean canRead() {
         // can only read decive memory if the argument is a global pointer that can be written by device (so not const)
-        return isPointer &&  addressQualifier == GLOBAL && !typeQualifiers.contains(CONST);
+        return type.isPointer() && addressQualifier == GLOBAL && !typeQualifiers.contains(CONST);
     }
 
     public boolean isAnyAddress(KernelArgAddressQualifier addressQualifier, KernelArgAddressQualifier... addressQualifiers) {
@@ -97,9 +85,7 @@ public class ParsedKernelArgument {
         if (typeQualifierNames.length() > 0)
             sb.append(typeQualifierNames).append(" ");
 
-        sb.append(typeName);
-        if (isPointer) sb.append("*");
-        sb.append(" ").append(argName);
+        sb.append(type.getName()).append(" ").append(argName);
 
         return sb.toString();
     }
@@ -111,8 +97,6 @@ public class ParsedKernelArgument {
     public static final class Builder {
         private int argIndex;
         private String argName;
-        private String typeName;
-        private boolean isPointer;
         private CLType type;
         private KernelArgAddressQualifier addressQualifier;
         private KernelArgAccessQualifier accessQualifier;
@@ -129,16 +113,6 @@ public class ParsedKernelArgument {
 
         public Builder withArgName(String argName) {
             this.argName = argName;
-            return this;
-        }
-
-        public Builder withTypeName(String typeName) {
-            this.typeName = typeName;
-            return this;
-        }
-
-        public Builder withPointer(boolean pointer) {
-            isPointer = pointer;
             return this;
         }
 
@@ -163,7 +137,7 @@ public class ParsedKernelArgument {
         }
 
         public ParsedKernelArgument build() {
-            return new ParsedKernelArgument(argIndex, argName, typeName, type, isPointer, addressQualifier, accessQualifier, typeQualifiers);
+            return new ParsedKernelArgument(argIndex, argName, type, addressQualifier, accessQualifier, typeQualifiers);
         }
     }
 

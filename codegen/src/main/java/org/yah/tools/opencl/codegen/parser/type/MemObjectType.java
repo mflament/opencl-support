@@ -25,6 +25,11 @@ public enum MemObjectType implements CLType {
     }
 
     @Override
+    public CLType getComponentType() {
+        return ScalarDataType.LONG;
+    }
+
+    @Override
     public boolean isMemObjectType() {
         return true;
     }
@@ -32,6 +37,11 @@ public enum MemObjectType implements CLType {
     @Override
     public MemObjectType asMemObjectType() {
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 
     @Nullable

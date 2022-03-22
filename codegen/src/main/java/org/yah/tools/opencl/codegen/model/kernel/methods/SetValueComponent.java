@@ -8,26 +8,27 @@ import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
 
 import java.util.Optional;
 
-public class SetValue extends AbstractSetKernelArgumentMethod {
+public class SetValueComponent extends AbstractSetKernelArgumentMethod {
 
-    public SetValue(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument) {
+    public SetValueComponent(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument, int componentCount) {
         super(kernelModel, parsedKernelArgument);
-        parameters.add(new Value(this, 0));
+        for (int i = 0; i < componentCount; i++)
+            parameters.add(new ValueComponent(this, i));
     }
 
     @Override
-    public boolean isSetValue() {
+    public boolean isSetValueComponent() {
         return true;
     }
 
     @Override
-    public SetValue asSetValue() {
+    public SetValueComponent asSetValueComponent() {
         return this;
     }
 
     @Override
     public Optional<KernelMethodParameter> getInvokeParameter() {
-        return Optional.of(parameters.get(0));
+        return Optional.empty();
     }
 
 }

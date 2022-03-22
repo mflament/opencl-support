@@ -8,6 +8,7 @@ import com.github.javaparser.ast.stmt.BlockStmt;
 import org.yah.tools.opencl.codegen.model.kernel.KernelModel;
 import org.yah.tools.opencl.codegen.model.program.ProgramModel;
 import org.yah.tools.opencl.codegen.parser.ParsedProgram;
+import org.yah.tools.opencl.codegen.parser.type.CLType;
 import org.yah.tools.opencl.context.CLContext;
 import org.yah.tools.opencl.enums.CommandQueueProperty;
 import org.yah.tools.opencl.generated.AbstractGeneratedProgram;
@@ -15,13 +16,13 @@ import org.yah.tools.opencl.platform.CLDevice;
 import org.yah.tools.opencl.program.CLCompilerOptions;
 
 import javax.annotation.Nullable;
+import java.util.Map;
 
-public class CLProgramGenerator extends AbstractCodeGenerator<CompilationUnit> {
+public class CLProgramGenerator extends AbstractImplementationGenerator {
 
-    public CLProgramGenerator(CompilationUnit programInterface) {
-        super(programInterface, getPackageName(programInterface), getTypeName(programInterface));
+    public CLProgramGenerator(CompilationUnit programInterface, Map<String, CLType> typeArguments) {
+        super(programInterface, getPackageName(programInterface), getTypeName(programInterface), typeArguments);
         declaration.addExtendedType(addImport(AbstractGeneratedProgram.class));
-        addImplementedType(programInterface);
     }
 
     @Override
@@ -61,7 +62,7 @@ public class CLProgramGenerator extends AbstractCodeGenerator<CompilationUnit> {
         String packageName = CLKernelGenerator.getPackageName(kernelModel.getProgramModel().getBasePackage());
         String className = CLKernelGenerator.getTypeName(kernelModel.getName());
         compilationUnit.addImport(packageName + "." + className);
-        implementsMethod(md).setBody(new BlockStmt().addStatement(String.format("return new %s(this, \"%s\");", className, kernelName)));
+        implementMethod(md).setBody(new BlockStmt().addStatement(String.format("return new %s(this, \"%s\");", className, kernelName)));
     }
 
     private static String getPackageName(CompilationUnit compilationUnit) {

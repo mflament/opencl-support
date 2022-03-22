@@ -4,8 +4,8 @@ import org.yah.tools.opencl.codegen.model.kernel.KernelArgumentMethod;
 
 public class Buffer extends AbstractKernelArgumentMethodParameter {
 
-    public Buffer(KernelArgumentMethod kernelMethod, Class<?> bufferType) {
-        super(kernelMethod, 0, bufferType, null);
+    public Buffer(KernelArgumentMethod kernelMethod) {
+        super(kernelMethod, 0, null);
     }
 
     @Override

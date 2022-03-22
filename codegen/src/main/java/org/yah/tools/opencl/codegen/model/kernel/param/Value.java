@@ -1,13 +1,11 @@
 package org.yah.tools.opencl.codegen.model.kernel.param;
 
-import org.yah.tools.opencl.codegen.model.kernel.KernelArgumentMethod;
 import org.yah.tools.opencl.codegen.model.kernel.methods.SetValue;
-import org.yah.tools.opencl.codegen.parser.type.CLType;
 
 public class Value extends AbstractKernelArgumentMethodParameter {
 
-    public Value(KernelArgumentMethod kernelMethod, int parameterIndex, Class<?> parameterType) {
-        super(kernelMethod, parameterIndex, parameterType, null);
+    public Value(SetValue kernelMethod, int parameterIndex) {
+        super(kernelMethod, parameterIndex, null);
     }
 
     @Override
@@ -25,7 +23,4 @@ public class Value extends AbstractKernelArgumentMethodParameter {
         return this;
     }
 
-    public CLType getType() {
-        return getMethod().getParsedKernelArgument().getType();
-    }
 }

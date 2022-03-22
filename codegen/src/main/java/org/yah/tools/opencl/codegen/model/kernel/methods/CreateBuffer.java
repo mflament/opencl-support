@@ -6,24 +6,27 @@ import org.yah.tools.opencl.codegen.model.kernel.param.Buffer;
 import org.yah.tools.opencl.codegen.model.kernel.param.BufferProperties;
 import org.yah.tools.opencl.codegen.model.kernel.param.BufferSize;
 import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
+import org.yah.tools.opencl.codegen.parser.type.CLType;
 
+import java.lang.reflect.Type;
 import java.util.Optional;
-import java.util.function.Function;
 
 public class CreateBuffer extends AbstractSetKernelArgumentMethod {
 
-    public CreateBuffer(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument, Class<?> bufferClass) {
-        this(kernelModel, parsedKernelArgument, m -> new Buffer(m, bufferClass));
+    public static CreateBuffer fromBuffer(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument) {
+        CreateBuffer cb = new CreateBuffer(kernelModel, parsedKernelArgument);
+        cb.parameters.add(0, new Buffer(cb));
+        return cb;
     }
 
-    public CreateBuffer(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument, int itemSize) {
-        this(kernelModel, parsedKernelArgument, m -> new BufferSize(m, itemSize));
+    public static CreateBuffer fromSize(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument) {
+        CreateBuffer cb = new CreateBuffer(kernelModel, parsedKernelArgument);
+        cb.parameters.add(0, new BufferSize(cb));
+        return cb;
     }
 
-    private CreateBuffer(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument,
-                         Function<CreateBuffer, KernelMethodParameter> sourceParamFactory) {
+    private CreateBuffer(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument) {
         super(kernelModel, parsedKernelArgument);
-        parameters.add(sourceParamFactory.apply(this));
         parameters.add(new BufferProperties(this, parameters.size()));
     }
 

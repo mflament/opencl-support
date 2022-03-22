@@ -4,14 +4,14 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.ast.type.Type;
-import org.yah.tools.opencl.codegen.model.kernel.*;
+import org.yah.tools.opencl.codegen.model.kernel.KernelMethod;
+import org.yah.tools.opencl.codegen.model.kernel.KernelMethodParameter;
+import org.yah.tools.opencl.codegen.model.kernel.KernelModel;
+import org.yah.tools.opencl.codegen.model.kernel.SetKernelArgumentMethod;
 import org.yah.tools.opencl.codegen.model.kernel.methods.Invoke;
-import org.yah.tools.opencl.codegen.model.kernel.param.InvokeRangeParameter;
 import org.yah.tools.opencl.codegen.model.kernel.param.EventBuffer;
-import org.yah.tools.opencl.enums.BufferProperty;
+import org.yah.tools.opencl.codegen.model.kernel.param.InvokeRangeParameter;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -24,6 +24,7 @@ public class KernelInterfaceGenerator extends AbstractCodeGenerator<KernelModel>
         declaration.setInterface(true);
         declaration.setJavadocComment(kernelModel.getParsedKernel().toString());
         setupData(declaration);
+        addTypeParameters(kernelModel.getReferencedTypeParameters());
     }
 
     @Override
@@ -41,6 +42,7 @@ public class KernelInterfaceGenerator extends AbstractCodeGenerator<KernelModel>
         } else {
             MethodDeclaration methodDeclaration = declaration.addMethod(kernelMethod.getMethodName()).removeBody();
             setupData(methodDeclaration, kernelMethod);
+            Type thisType = getThisType();
             methodDeclaration.setType(thisType);
 
             if (kernelMethod.isKernelArgumentMethod())
@@ -98,15 +100,12 @@ public class KernelInterfaceGenerator extends AbstractCodeGenerator<KernelModel>
     }
 
     private void generateMethodParameter(KernelMethodParameter parameter, MethodDeclaration methodDeclaration) {
-        Parameter parameterDeclaration;
-        if (parameter.isBufferProperties()) {
-            parameterDeclaration = new Parameter(addImport(BufferProperty.class), "bufferProperties").setVarArgs(true);
-        } else {
-            parameterDeclaration = new Parameter(resolveType(parameter), parameter.getParameterName());
-            if (!parameterDeclaration.getType().isPrimitiveType() && parameter.isOptional()) {
-                compilationUnit.addImport(Nullable.class);
-                parameterDeclaration.addMarkerAnnotation(Nullable.class);
-            }
+        Parameter parameterDeclaration = new Parameter(resolveParameterType(parameter), parameter.getParameterName());
+        if (parameter.isBufferProperties())
+            parameterDeclaration.setVarArgs(true);
+        else if (parameter.isOptional() && !parameterDeclaration.getType().isPrimitiveType()) {
+            compilationUnit.addImport(Nullable.class);
+            parameterDeclaration.addMarkerAnnotation(Nullable.class);
         }
         setupData(parameterDeclaration, methodDeclaration.getData(KERNEL_METHOD), parameter);
         methodDeclaration.addParameter(parameterDeclaration);
@@ -127,27 +126,4 @@ public class KernelInterfaceGenerator extends AbstractCodeGenerator<KernelModel>
         node.setData(KERNEL_MODEL, source);
     }
 
-    private Type resolveType(KernelMethodParameter parameter) {
-        Class<?> parameterType = parameter.getParameterType();
-        if (parameterType.isPrimitive()) {
-            if (parameterType == Byte.TYPE)
-                return PrimitiveType.byteType();
-            if (parameterType == Short.TYPE)
-                return PrimitiveType.shortType();
-            if (parameterType == Integer.TYPE)
-                return PrimitiveType.intType();
-            if (parameterType == Long.TYPE)
-                return PrimitiveType.longType();
-            if (parameterType == Float.TYPE)
-                return PrimitiveType.floatType();
-            if (parameterType == Double.TYPE)
-                return PrimitiveType.doubleType();
-            if (parameterType == Boolean.TYPE)
-                return PrimitiveType.booleanType();
-            throw new IllegalArgumentException("Unsupported primitive type " + parameterType + " for parameter " + parameter);
-        } else {
-            compilationUnit.addImport(parameterType);
-            return new ClassOrInterfaceType(null, parameterType.getSimpleName());
-        }
-    }
 }

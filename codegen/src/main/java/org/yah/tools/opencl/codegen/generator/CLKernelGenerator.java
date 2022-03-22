@@ -2,11 +2,11 @@ package org.yah.tools.opencl.codegen.generator;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Modifier.Keyword;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
-import org.lwjgl.PointerBuffer;
 import org.yah.tools.opencl.codegen.NamingStrategy;
 import org.yah.tools.opencl.codegen.model.kernel.KernelArgumentMethod;
 import org.yah.tools.opencl.codegen.model.kernel.KernelMethod;
@@ -15,23 +15,23 @@ import org.yah.tools.opencl.codegen.model.kernel.KernelModel;
 import org.yah.tools.opencl.codegen.model.kernel.methods.CreateBuffer;
 import org.yah.tools.opencl.codegen.model.kernel.methods.SetValue;
 import org.yah.tools.opencl.codegen.model.kernel.methods.WriteBuffer;
+import org.yah.tools.opencl.codegen.model.kernel.param.BufferSize;
+import org.yah.tools.opencl.codegen.parser.type.CLType;
 import org.yah.tools.opencl.generated.AbstractGeneratedKernel;
-import org.yah.tools.opencl.generated.ManagedCLBuffer;
 import org.yah.tools.opencl.mem.CLBuffer;
 
-import java.nio.*;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-public class CLKernelGenerator extends AbstractCodeGenerator<CompilationUnit> {
+public class CLKernelGenerator extends AbstractImplementationGenerator {
 
     private final ClassOrInterfaceType programType;
 
-    public CLKernelGenerator(CompilationUnit clProgram, CompilationUnit kernelInterface) {
-        super(kernelInterface, getPackageName(kernelInterface), getTypeName(kernelInterface));
+    public CLKernelGenerator(CompilationUnit clProgram, CompilationUnit kernelInterface, Map<String, CLType> typeArguments) {
+        super(kernelInterface, getPackageName(kernelInterface), getTypeName(kernelInterface), typeArguments);
         programType = addImport(clProgram);
         declaration.addExtendedType(addImport(AbstractGeneratedKernel.class));
-        addImplementedType(kernelInterface);
     }
 
     @Override
@@ -54,10 +54,11 @@ public class CLKernelGenerator extends AbstractCodeGenerator<CompilationUnit> {
 
         BlockStmt stmt = new BlockStmt().addStatement("super(program, kernelName);");
 
-        declaration.addConstructor(Keyword.PUBLIC)
+        ConstructorDeclaration constructorDeclaration = declaration.addConstructor(Keyword.PUBLIC)
                 .addParameter(programType, "program")
-                .addParameter(String.class, "kernelName")
-                .setBody(stmt);
+                .addParameter(String.class, "kernelName");
+
+        constructorDeclaration.setBody(stmt);
     }
 
     private void generateMethod(MethodDeclaration md) {
@@ -79,36 +80,53 @@ public class CLKernelGenerator extends AbstractCodeGenerator<CompilationUnit> {
             CreateBuffer createBuffer = kernelMethod.asCreateBuffer();
             String bufferFieldName = getBufferFieldName(createBuffer);
             KernelMethodParameter sourceParameter = createBuffer.getParameter(0);
-            String source = createBufferSizeExpr(sourceParameter);
+            String source;
+            if (sourceParameter.isBufferSize())
+                source = createBufferSizeExpr(sourceParameter.asBufferSize());
+            else
+                source = sourceParameter.getParameterName();
             KernelMethodParameter propsParameter = createBuffer.getParameter(1);
             String defaultProps = sourceParameter.isBufferSize() ? "DEFAULT_READ_PROPERTIES" : "DEFAULT_WRITE_PROPERTIES";
             implementsMethod(md, String.format("%s = closeAndCreate(%d, %s, %s, %s, builder -> builder.build(%s));",
                     bufferFieldName, argIndex, bufferFieldName,
                     propsParameter.getParameterName(), defaultProps, source));
         } else if (kernelMethod.isSetLocalSize()) {
-            KernelMethodParameter sourceParameter = kernelMethod.getParameter(0);
-            String size = createBufferSizeExpr(sourceParameter);
+            String size = createBufferSizeExpr(kernelMethod.getParameter(0).asBufferSize());
             implementsMethod(md, String.format("kernel.setArgSize(%d, %s);", argIndex, size));
-        } else if (kernelMethod.isSetValue()) {
-            SetValue setValue = kernelMethod.asSetValue();
+        } else if (kernelMethod.isSetValue() || kernelMethod.isSetValueComponent()) {
+            KernelArgumentMethod kernelArgumentMethod = kernelMethod.asKernelArgumentMethod();
             implementsMethod(md, String.format("kernel.setArg(%d, %s);",
-                    setValue.getParsedKernelArgument().getArgIndex(),
+                    kernelArgumentMethod.getParsedKernelArgument().getArgIndex(),
                     parameterNames(md)));
         } else if (kernelMethod.isInvoke()) {
             implementsMethod(md, String.format("run(%s);", parameterNames(md)));
         }
     }
 
-    private static String createBufferSizeExpr(KernelMethodParameter sourceParameter) {
-        String size = sourceParameter.getParameterName();
-        if (sourceParameter.isBufferSize() && sourceParameter.asBufferSize().getItemSize() > 1) {
-            size += " * " + sourceParameter.asBufferSize().getItemSize() + "L";
+    private String createBufferSizeExpr(BufferSize sourceParameter) {
+        CLType bufferType = sourceParameter.getMethod().getParsedKernelArgument().getType();
+        int elementSize = getBufferElementSize(bufferType);
+        if (elementSize > 1)
+            return sourceParameter.getParameterName() + " * " + elementSize + "L";
+        return sourceParameter.getParameterName();
+    }
+
+    private int getBufferElementSize(CLType type) {
+        CLType componentType = type.getComponentType();
+        if (componentType.isCLTypeParameter()) {
+            componentType = typeArguments.get(componentType.asCLTypeParameter().getName());
+            if (componentType == null)
+                throw unresolvedTypeError(type);
         }
-        return size;
+
+        if (!componentType.isScalar())
+            throw invalidTypeError(type);
+
+        return getScalarSize(componentType.asScalar());
     }
 
     private void implementsMethod(MethodDeclaration md, String stmt) {
-        super.implementsMethod(md).setBody(new BlockStmt().addStatement(stmt).addStatement("return this;"));
+        super.implementMethod(md).setBody(new BlockStmt().addStatement(stmt).addStatement("return this;"));
     }
 
     private static String parameterNames(MethodDeclaration md) {

@@ -1,51 +1,16 @@
 package org.yah.tools.opencl.program;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/clBuildProgram.html
  */
 public class CLCompilerOptions {
 
-    public static final class Macro {
-        private final String name;
-        @Nullable
-        private final String value;
-
-        public Macro(String name, @Nullable String value) {
-            this.name = Objects.requireNonNull(name, "name is null");
-            this.value = value;
-        }
-
-        public Macro(Macro macro) {
-            Objects.requireNonNull(macro, "macro is null");
-            this.name = macro.name;
-            this.value = macro.value;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        @Nullable
-        public String getValue() {
-            return value;
-        }
-
-        @Override
-        public String toString() {
-            if (value != null)
-                return name + "=" + value;
-            return name;
-        }
-    }
-
     // Preprocessor Options
 
-    private final List<Macro> macros = new ArrayList<>();
+    private final Map<String, String> macros = new LinkedHashMap<>();
     private final List<String> includes = new ArrayList<>();
 
     // Math Intrinsics Options
@@ -74,7 +39,7 @@ public class CLCompilerOptions {
 
     private boolean kernelArgInfo;
 
-    public List<Macro> getMacros() {
+    public Map<String, String> getMacros() {
         return macros;
     }
 
@@ -259,12 +224,26 @@ public class CLCompilerOptions {
         return this;
     }
 
+    public CLCompilerOptions putMacro(String name, String value) {
+        macros.put(name, value);
+        return this;
+    }
+
+    public CLCompilerOptions putMacro(String name) {
+        return putMacro(name, name);
+    }
+
+    @Nullable
+    public String getMacro(String name) {
+        return macros.get(name);
+    }
+
     public CLCompilerOptions() {
     }
 
     public CLCompilerOptions(@Nullable CLCompilerOptions options) {
         if (options != null) {
-            options.macros.stream().map(Macro::new).forEach(macros::add);
+            macros.putAll(options.macros);
             includes.addAll(options.includes);
             singlePrecisionConstant = options.singlePrecisionConstant;
             denormsAreZero = options.denormsAreZero;
@@ -285,7 +264,7 @@ public class CLCompilerOptions {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        macros.forEach(m -> sb.append("-D ").append(m).append(" "));
+        macros.forEach((m, v) -> sb.append("-D ").append(printMacro(m, v)).append(" "));
         includes.forEach(i -> sb.append("-I ").append(i).append(" "));
 
         append("-cl-single-precision-constant", singlePrecisionConstant, sb);
@@ -305,6 +284,11 @@ public class CLCompilerOptions {
             sb.append("-cl-std=").append(clStd).append(" ");
 
         return sb.toString().trim();
+    }
+
+    private static String printMacro(String name, @Nullable String value) {
+        if (value == null) return name;
+        return name + "=" + value;
     }
 
     private static void append(String what, boolean when, StringBuilder where) {
@@ -378,7 +362,7 @@ public class CLCompilerOptions {
                             name = nextPart;
                             value = null;
                         }
-                        options.macros.add(new Macro(name, value));
+                        options.putMacro(name, value);
                     }
                 } else if (part.equals("-I")) {
                     if (partIndex + 1 < parts.length) {

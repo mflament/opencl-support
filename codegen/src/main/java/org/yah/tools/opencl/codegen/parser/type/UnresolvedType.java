@@ -11,6 +11,11 @@ public class UnresolvedType implements CLType {
     }
 
     @Override
+    public CLType getComponentType() {
+        return ScalarDataType.UCHAR;
+    }
+
+    @Override
     public String getName() {
         return name;
     }
@@ -22,8 +27,6 @@ public class UnresolvedType implements CLType {
 
     @Override
     public String toString() {
-        return "CLUnresolvedType{" +
-                "name='" + name + '\'' +
-                '}';
+        return name;
     }
 }

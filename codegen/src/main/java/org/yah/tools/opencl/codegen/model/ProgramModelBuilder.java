@@ -1,7 +1,5 @@
 package org.yah.tools.opencl.codegen.model;
 
-import org.lwjgl.PointerBuffer;
-import org.yah.tools.opencl.codegen.DefaultNamingStrategy;
 import org.yah.tools.opencl.codegen.NamingStrategy;
 import org.yah.tools.opencl.codegen.model.kernel.KernelArgumentMethod;
 import org.yah.tools.opencl.codegen.model.kernel.KernelMethod;
@@ -13,10 +11,9 @@ import org.yah.tools.opencl.codegen.parser.ParsedKernel;
 import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
 import org.yah.tools.opencl.codegen.parser.ParsedProgram;
 import org.yah.tools.opencl.codegen.parser.type.CLType;
-import org.yah.tools.opencl.codegen.parser.type.ScalarDataType;
+import org.yah.tools.opencl.codegen.parser.type.CLTypeParameter;
 import org.yah.tools.opencl.enums.KernelArgAddressQualifier;
 
-import java.nio.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -29,10 +26,6 @@ public class ProgramModelBuilder {
 
     private final NamingStrategy namingStrategy;
     private final boolean generateDirectInvokes;
-
-    public ProgramModelBuilder() {
-        this(DefaultNamingStrategy.get(), false);
-    }
 
     public ProgramModelBuilder(NamingStrategy namingStrategy, boolean generateDirectInvokes) {
         this.namingStrategy = Objects.requireNonNull(namingStrategy, "namingStrategy is null");
@@ -64,27 +57,21 @@ public class ProgramModelBuilder {
     }
 
     private List<KernelArgumentMethod> createKernelArgumentMethods(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument) {
-        if (parsedKernelArgument.isPointer())
+        CLType type = parsedKernelArgument.getType();
+        if (type.isCLTypeParameter()) {
+            CLTypeParameter typeParameter = type.asCLTypeParameter();
+            type = typeParameter.getReferenceType();
+        }
+
+        if (type.isPointer())
             return createPointerArgumentMethods(kernelModel, parsedKernelArgument);
 
-        CLType type = parsedKernelArgument.getType();
         List<KernelArgumentMethod> methods = new ArrayList<>();
-        if (type.isMemObjectType()) {
-            methods.add(new SetValue(kernelModel, parsedKernelArgument, Long.TYPE));
-        } else {
-            if (type.isVector()) {
-                ScalarDataType componentType = type.asVector().getScalarType();
-                methods.add(new SetValue(kernelModel, parsedKernelArgument, componentType.getBufferClass()));
-                int vectorSize = type.asVector().getSize();
-                if (vectorSize < 4)
-                    methods.add(new SetValue(kernelModel, parsedKernelArgument, componentType.getValueClass(), vectorSize));
-            } else if (type.isScalar()) {
-                ScalarDataType scalarType = type.asScalar();
-                methods.add(new SetValue(kernelModel, parsedKernelArgument, scalarType.getValueClass()));
-            } else if (type.isUnresolved()) {
-                methods.add(new SetValue(kernelModel, parsedKernelArgument, ByteBuffer.class));
-            }
-        }
+
+        methods.add(new SetValue(kernelModel, parsedKernelArgument));
+
+        if (type.isVector() && type.asVector().getSize() <= 4)
+            methods.add(new SetValueComponent(kernelModel, parsedKernelArgument, type.asVector().getSize()));
 
         return methods;
     }
@@ -92,22 +79,20 @@ public class ProgramModelBuilder {
     private List<KernelArgumentMethod> createPointerArgumentMethods(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument) {
         List<KernelArgumentMethod> methods = new ArrayList<>();
         KernelArgAddressQualifier addressQualifier = parsedKernelArgument.getAddressQualifier();
-        Class<?> bufferClass = getBufferClass(parsedKernelArgument);
 
         if (addressQualifier == KernelArgAddressQualifier.GLOBAL || addressQualifier == KernelArgAddressQualifier.CONSTANT) {
-
-            methods.add(new CreateBuffer(kernelModel, parsedKernelArgument, bufferClass));
-            methods.add(new CreateBuffer(kernelModel, parsedKernelArgument, getBufferBytes(bufferClass)));
+            methods.add(CreateBuffer.fromBuffer(kernelModel, parsedKernelArgument));
+            methods.add(CreateBuffer.fromSize(kernelModel, parsedKernelArgument));
 
             // can write buffer, null buffer is supported
-            methods.add(new WriteBuffer(kernelModel, parsedKernelArgument, bufferClass));
+            methods.add(new WriteBuffer(kernelModel, parsedKernelArgument));
 
             if (parsedKernelArgument.canRead()) {
                 // device can write buffer, so host could need to read it
-                methods.add(new ReadBuffer(kernelModel, parsedKernelArgument, bufferClass));
+                methods.add(new ReadBuffer(kernelModel, parsedKernelArgument));
             }
         } else { //  local pointer can not have data, only size
-            methods.add(new SetLocalSize(kernelModel, parsedKernelArgument, getBufferBytes(bufferClass)));
+            methods.add(new SetLocalSize(kernelModel, parsedKernelArgument));
         }
 
         return methods;
@@ -142,31 +127,6 @@ public class ProgramModelBuilder {
             return kernelMethod.asSetKernelArgumentMethod().getInvokeParameter().isPresent();
         }
         return false;
-    }
-
-    private static Class<?> getBufferClass(ParsedKernelArgument parsedKernelArgument) {
-        CLType type = parsedKernelArgument.getType();
-        if (type.isScalar())
-            return type.asScalar().getBufferClass();
-        if (type.isVector())
-            return type.asVector().getScalarType().getBufferClass();
-        if (type.isUnresolved())
-            return ByteBuffer.class;
-        throw new IllegalArgumentException("No buffer class for type " + type);
-    }
-
-    private static int getBufferBytes(Class<?> bufferClass) {
-        if (bufferClass == ByteBuffer.class)
-            return 1;
-        if (bufferClass == Short.class)
-            return 2;
-        if (bufferClass == IntBuffer.class || bufferClass == FloatBuffer.class)
-            return 4;
-        if (bufferClass == DoubleBuffer.class || bufferClass == LongBuffer.class)
-            return 8;
-        if (bufferClass == PointerBuffer.class)
-            return PointerBuffer.POINTER_SIZE;
-        throw new IllegalArgumentException("Invalid buffer class " + bufferClass);
     }
 
     private static <T> void combinatories(T[][] values, Consumer<List<T>> combinationConsumer) {

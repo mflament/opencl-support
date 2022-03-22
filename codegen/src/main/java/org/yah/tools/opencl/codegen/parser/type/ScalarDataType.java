@@ -1,9 +1,6 @@
 package org.yah.tools.opencl.codegen.parser.type;
 
-import org.lwjgl.PointerBuffer;
-
 import javax.annotation.Nullable;
-import java.nio.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -43,6 +40,11 @@ public enum ScalarDataType implements CLType {
     }
 
     @Override
+    public ScalarDataType getComponentType() {
+        return this;
+    }
+
+    @Override
     public boolean isScalar() {
         return true;
     }
@@ -52,84 +54,9 @@ public enum ScalarDataType implements CLType {
         return this;
     }
 
-    public Class<?> getValueClass() {
-        switch (this) {
-            case BOOL:
-                return Boolean.TYPE;
-            case CHAR:
-            case UCHAR:
-            case VOID:
-                return Byte.TYPE;
-            case SHORT:
-            case USHORT:
-            case HALF:
-                return Short.TYPE;
-            case INT:
-            case UINT:
-                return Integer.TYPE;
-            case LONG:
-            case ULONG:
-            case SIZE_T:
-            case PTRDIFF_T:
-            case INTPTR_T:
-            case UINTPTR_T:
-                return Long.TYPE;
-            case FLOAT:
-                return Float.TYPE;
-            case DOUBLE:
-                return Double.TYPE;
-            default:
-                throw new IllegalStateException("Unhandled scalar type " + this);
-        }
-    }
-
-    public Class<?> getBufferClass() {
-        switch (this) {
-            case SHORT:
-            case USHORT:
-            case HALF:
-                return ShortBuffer.class;
-            case INT:
-            case UINT:
-                return IntBuffer.class;
-            case LONG:
-            case ULONG:
-                return LongBuffer.class;
-            case SIZE_T:
-            case PTRDIFF_T:
-            case INTPTR_T:
-            case UINTPTR_T:
-                return PointerBuffer.class;
-            case FLOAT:
-                return FloatBuffer.class;
-            case DOUBLE:
-                return DoubleBuffer.class;
-            default:
-                return ByteBuffer.class;
-        }
-    }
-
-    public int getJavaBytes() {
-        switch (this) {
-            case SHORT:
-            case USHORT:
-            case HALF:
-                return 2;
-            case INT:
-            case UINT:
-            case FLOAT:
-                return 4;
-            case LONG:
-            case ULONG:
-            case DOUBLE:
-            case SIZE_T:
-            case PTRDIFF_T:
-            case INTPTR_T:
-            case UINTPTR_T:
-                return 8;
-            default:
-                return 1;
-        }
+    @Override
+    public String toString() {
+        return getName();
     }
 
     @Nullable

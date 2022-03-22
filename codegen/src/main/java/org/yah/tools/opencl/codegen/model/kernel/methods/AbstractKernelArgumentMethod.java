@@ -6,6 +6,7 @@ import org.yah.tools.opencl.codegen.model.kernel.param.Buffer;
 import org.yah.tools.opencl.codegen.model.kernel.param.BufferOffset;
 import org.yah.tools.opencl.codegen.model.kernel.param.EventBuffer;
 import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
+import org.yah.tools.opencl.codegen.parser.type.CLType;
 
 import java.util.Objects;
 
@@ -32,8 +33,8 @@ abstract class AbstractKernelArgumentMethod extends AbstractKernelMethod impleme
         return this;
     }
 
-    protected final EventBuffer createBufferParameters(Class<?> bufferClass) {
-        parameters.add(new Buffer(this, bufferClass));
+    protected final EventBuffer createBufferParameters() {
+        parameters.add(new Buffer(this));
         parameters.add(new BufferOffset(this));
         EventBuffer eventsBuffer = new EventBuffer(this, parameters.size());
         parameters.add(eventsBuffer);

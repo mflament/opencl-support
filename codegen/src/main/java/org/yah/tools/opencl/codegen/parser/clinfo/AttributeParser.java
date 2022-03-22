@@ -1,5 +1,6 @@
 package org.yah.tools.opencl.codegen.parser.clinfo;
 
+import org.yah.tools.opencl.codegen.parser.TypeResolver;
 import org.yah.tools.opencl.codegen.parser.attribute.*;
 
 import java.util.Objects;

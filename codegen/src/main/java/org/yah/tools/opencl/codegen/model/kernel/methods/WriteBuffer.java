@@ -5,6 +5,7 @@ import org.yah.tools.opencl.codegen.model.kernel.KernelMethodParameter;
 import org.yah.tools.opencl.codegen.model.kernel.KernelModel;
 import org.yah.tools.opencl.codegen.model.kernel.param.EventBuffer;
 import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
+import org.yah.tools.opencl.codegen.parser.type.CLType;
 
 import java.util.Optional;
 
@@ -12,9 +13,9 @@ public class WriteBuffer extends AbstractSetKernelArgumentMethod implements Asyn
 
     private final EventBuffer eventsBuffer;
 
-    public WriteBuffer(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument, Class<?> bufferClass) {
+    public WriteBuffer(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument) {
         super(kernelModel, parsedKernelArgument);
-        eventsBuffer = createBufferParameters(bufferClass);
+        eventsBuffer = createBufferParameters();
     }
 
     @Override

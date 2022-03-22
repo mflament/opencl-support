@@ -60,6 +60,14 @@ public interface KernelMethod extends MethodModel {
         throw new UnsupportedOperationException();
     }
 
+    default boolean isSetValueComponent() {
+        return false;
+    }
+
+    default SetValueComponent asSetValueComponent() {
+        throw new UnsupportedOperationException();
+    }
+
     default boolean isWriteBuffer() {
         return false;
     }

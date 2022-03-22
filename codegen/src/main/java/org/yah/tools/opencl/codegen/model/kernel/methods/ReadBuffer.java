@@ -4,14 +4,15 @@ import org.yah.tools.opencl.codegen.model.kernel.AsyncKernelMethod;
 import org.yah.tools.opencl.codegen.model.kernel.KernelModel;
 import org.yah.tools.opencl.codegen.model.kernel.param.EventBuffer;
 import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
+import org.yah.tools.opencl.codegen.parser.type.CLType;
 
 public class ReadBuffer extends AbstractKernelArgumentMethod implements AsyncKernelMethod {
 
     private final EventBuffer eventsBuffer;
 
-    public ReadBuffer(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument, Class<?> bufferClass) {
+    public ReadBuffer(KernelModel kernelModel, ParsedKernelArgument parsedKernelArgument) {
         super(kernelModel, parsedKernelArgument);
-        eventsBuffer = createBufferParameters(bufferClass);
+        eventsBuffer = createBufferParameters();
     }
 
     @Override

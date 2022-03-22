@@ -1,5 +1,6 @@
 package org.yah.tools.opencl.program;
 
+import org.apache.commons.io.IOUtils;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -270,31 +271,26 @@ public class CLProgram implements CLObject {
             return sb.toString();
         }
 
-        private String loadSource(String file) {
-            byte[] buffer = new byte[4 * 1024];
-            StringBuilder sb = new StringBuilder();
-            try (InputStream is = openStream(file)) {
-                int l;
-                while ((l = is.read(buffer)) >= 0) {
-                    sb.append(new String(buffer, 0, l, StandardCharsets.UTF_8));
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-            return sb.toString();
-        }
+    }
 
-        private static InputStream openStream(String file) throws IOException {
-            String resourcePath = getResourcePath(file);
-            if (resourcePath != null) {
-                ClassLoader classLoader = CLProgram.class.getClassLoader();
-                URL url = classLoader.getResource(resourcePath);
-                if (url == null)
-                    throw new FileNotFoundException("Classpath resource " + resourcePath + " was not found");
-                return url.openStream();
-            } else {
-                return Files.newInputStream(Paths.get(file));
-            }
+    public static String loadSource(String path) {
+        try (InputStream is = openStream(path)) {
+            return IOUtils.toString(is, StandardCharsets.UTF_8.displayName());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static InputStream openStream(String path) throws IOException {
+        String resourcePath = getResourcePath(path);
+        if (resourcePath != null) {
+            ClassLoader classLoader = CLProgram.class.getClassLoader();
+            URL url = classLoader.getResource(resourcePath);
+            if (url == null)
+                throw new FileNotFoundException("Classpath resource " + resourcePath + " was not found");
+            return url.openStream();
+        } else {
+            return Files.newInputStream(Paths.get(path));
         }
     }
 }

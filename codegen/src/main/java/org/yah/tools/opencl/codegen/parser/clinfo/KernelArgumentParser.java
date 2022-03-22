@@ -2,6 +2,7 @@ package org.yah.tools.opencl.codegen.parser.clinfo;
 
 import org.lwjgl.BufferUtils;
 import org.yah.tools.opencl.CLParameterReader;
+import org.yah.tools.opencl.codegen.parser.TypeResolver;
 import org.yah.tools.opencl.codegen.parser.ParsedKernelArgument;
 import org.yah.tools.opencl.codegen.parser.type.CLType;
 import org.yah.tools.opencl.enums.*;
@@ -25,14 +26,9 @@ public class KernelArgumentParser {
 
     public ParsedKernelArgument parse(CLKernel kernel, int argIndex) {
         String typeName = readStringArgInfo(kernel, argIndex, CL_KERNEL_ARG_TYPE_NAME);
-        boolean isPointer = typeName.endsWith("*");
-        if (isPointer)
-            typeName = typeName.substring(0, typeName.length()-1);
         CLType resolvedType = typeResolver.resolve(typeName);
         return ParsedKernelArgument.builder()
                 .withArgIndex(argIndex)
-                .withTypeName(typeName)
-                .withPointer(isPointer)
                 .withType(resolvedType)
                 .withArgName(readStringArgInfo(kernel, argIndex, CL_KERNEL_ARG_NAME))
                 .withAddressQualifier(readEnumArgInfo(kernel, argIndex, CL_KERNEL_ARG_ADDRESS_QUALIFIER, KernelArgAddressQualifier.class))

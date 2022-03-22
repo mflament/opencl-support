@@ -4,11 +4,10 @@ import org.yah.tools.opencl.codegen.NamingStrategy;
 import org.yah.tools.opencl.codegen.model.TypeModel;
 import org.yah.tools.opencl.codegen.model.program.ProgramModel;
 import org.yah.tools.opencl.codegen.parser.ParsedKernel;
+import org.yah.tools.opencl.codegen.parser.type.CLType;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class KernelModel implements TypeModel {
 
@@ -47,6 +46,15 @@ public class KernelModel implements TypeModel {
 
     public List<? extends KernelMethod> getMethods() {
         return methods;
+    }
+
+    public List<String> getReferencedTypeParameters() {
+        return parsedKernel.getArguments().stream()
+                .map(pka -> pka.getType().getComponentType())
+                .filter(CLType::isCLTypeParameter)
+                .map(type -> type.asCLTypeParameter().getName())
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     public NamingStrategy getNamingStrategy() {

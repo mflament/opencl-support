@@ -72,4 +72,12 @@ public interface KernelMethodParameter extends MethodParameterModel {
         throw new UnsupportedOperationException();
     }
 
+    default boolean isValueComponent() {
+        return false;
+    }
+
+    default ValueComponent asValueComponent() {
+        throw new UnsupportedOperationException();
+    }
+
 }
