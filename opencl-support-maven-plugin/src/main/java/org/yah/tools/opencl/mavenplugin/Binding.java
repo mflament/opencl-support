@@ -1,7 +1,8 @@
 package org.yah.tools.opencl.mavenplugin;
 
-import org.yah.tools.opencl.codegen.DefaultNamingStrategy;
-import org.yah.tools.opencl.codegen.NamingStrategy;
+import org.yah.tools.opencl.codegen.naming.DefaultNamingStrategy;
+import org.yah.tools.opencl.codegen.naming.NamingStrategy;
+import org.yah.tools.opencl.codegen.naming.TypeNameDecorator;
 
 import java.util.List;
 
@@ -58,6 +59,14 @@ public class Binding {
      */
     public String kernelNameSuffix;
 
+    /**
+     * Type arguments formatted as : <i>typeName</i>=<i>typeDeclaration</i>;...
+     * ex: T=int,float;U=int4;V=double
+     */
+    public List<String> typeArguments;
+
+    public List<String> kernelSuperInterfaces;
+
     public Binding() {
     }
 
@@ -72,20 +81,22 @@ public class Binding {
         programNameSuffix = mojo.programNameSuffix;
         kernelNamePrefix = mojo.kernelNamePrefix;
         kernelNameSuffix = mojo.kernelNameSuffix;
+        typeArguments = mojo.typeArguments;
     }
 
     public NamingStrategy createNamingStrategy() {
-        DefaultNamingStrategy.TypeNameDecorator programDecorator = createNameDecorator(programNamePrefix, programNameSuffix);
-        DefaultNamingStrategy.TypeNameDecorator kernelDecorator = createNameDecorator(kernelNamePrefix, kernelNameSuffix);
+        TypeNameDecorator programDecorator = createNameDecorator(programNamePrefix, programNameSuffix);
+        TypeNameDecorator kernelDecorator = createNameDecorator(kernelNamePrefix, kernelNameSuffix);
         if (programDecorator != null || kernelDecorator != null)
             return new DefaultNamingStrategy(programDecorator, kernelDecorator);
         return DefaultNamingStrategy.get();
     }
 
-    public DefaultNamingStrategy.TypeNameDecorator createNameDecorator(String prefix, String suffix) {
+    public TypeNameDecorator createNameDecorator(String prefix, String suffix) {
         if (prefix == null) prefix = namePrefix;
         if (suffix == null) suffix = nameSuffix;
-        if (prefix != null || suffix != null) return new DefaultNamingStrategy.TypeNameDecorator(prefix, suffix);
+        if (prefix != null || suffix != null)
+            return new TypeNameDecorator(prefix, suffix);
         return null;
     }
 

@@ -18,7 +18,7 @@
     <dependencies>
         <dependency>
             <groupId>org.yah.tools.opencl</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>opencl-support-core</artifactId>
             <version>@project.version@</version>
         </dependency>
     </dependencies>

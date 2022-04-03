@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.yah.tools.opencl</groupId>
+    <artifactId>opencl-support-sandbox</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
+        <opencl-support.version>1.1.0-SNAPSHOT</opencl-support.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.yah.tools.opencl</groupId>
+                <artifactId>opencl-support</artifactId>
+                <version>${opencl-support.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.yah.tools.opencl</groupId>
+            <artifactId>opencl-support-core</artifactId>
+            <version>${opencl-support.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+            <classifier>natives-windows</classifier>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+            <classifier>natives-linux</classifier>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+            <classifier>natives-macos</classifier>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.yah.tools.opencl</groupId>
+                <artifactId>opencl-support-maven-plugin</artifactId>
+                <version>${opencl-support.version}</version>
+                <executions>
+                    <execution>
+                        <id>generate-cl-bindings</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <basePackage>org.yah.opencl.test.programs</basePackage>
+                            <bindings>
+                                <binding>
+                                    <includes>
+                                        <include>oclReduction.cl</include>
+                                    </includes>
+                                    <compilerOptions>-D blockSize=128 -D nIsPow2=1</compilerOptions>
+                                    <typeArguments>
+                                        <param>T=float</param>
+                                    </typeArguments>
+                                    <kernelSuperInterfaces>
+                                        <param>org.yah.opencl.test.reduce.ReduceKernel&lt;T&gt;</param>
+                                    </kernelSuperInterfaces>
+                                </binding>
+
+                                <binding>
+                                    <includes>
+                                        <include>sum.cl</include>
+                                    </includes>
+                                    <typeArguments>
+                                        <param>T=int</param>
+                                        <param>T=float</param>
+                                    </typeArguments>
+                                </binding>
+
+                                <binding>
+                                    <includes>
+                                        <include>sqrt.cl</include>
+                                    </includes>
+                                </binding>
+
+                            </bindings>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.2</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

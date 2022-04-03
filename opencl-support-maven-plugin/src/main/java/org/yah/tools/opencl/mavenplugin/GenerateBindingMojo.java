@@ -9,12 +9,14 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.yah.tools.opencl.CLUtils;
 import org.yah.tools.opencl.codegen.generator.ProgramGenerator;
-import org.yah.tools.opencl.codegen.TypeParametersConfig;
+import org.yah.tools.opencl.codegen.generator.ProgramGeneratorRequest;
+import org.yah.tools.opencl.codegen.parser.CLTypeVariables;
 import org.yah.tools.opencl.context.CLContext;
 import org.yah.tools.opencl.program.CLCompilerOptions;
-import org.yah.tools.opencl.program.CLProgram;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -111,6 +113,19 @@ public class GenerateBindingMojo extends AbstractMojo {
     @Parameter
     public String kernelNameSuffix;
 
+    /**
+     * fully qualified names of extended kernel interface
+     */
+    @Parameter
+    public List<String> kernelSuperInterfaces;
+
+    /**
+     * Type arguments formatted as : <i>typeName</i>=<i>typeDeclaration</i>;...
+     * ex: T=int,float;U=int4;V=double
+     */
+    @Parameter
+    public List<String> typeArguments = new ArrayList<>();
+
     @Parameter(defaultValue = "${project}", readonly = true)
     private MavenProject project;
 
@@ -118,8 +133,6 @@ public class GenerateBindingMojo extends AbstractMojo {
     private List<Binding> bindings;
 
     private final AntPathMatcherArrays pathMatcher = new AntPathMatcherArrays.Builder().build();
-
-    // TODO add a Map<String,String> to customize java program class name, from program path
 
     @Override
     public void execute() throws MojoExecutionException {
@@ -161,8 +174,8 @@ public class GenerateBindingMojo extends AbstractMojo {
             this.sourcePath = Objects.requireNonNull(sourcePath, "sourcePath is null");
             this.config = Objects.requireNonNull(config, "config is null");
             outputPath = resolvePath(outputDirectory, DEFAULT_OUTPUT_DIRECTORY);
-            programGenerator = new ProgramGenerator(outputPath, config.createNamingStrategy());
             context = CLContext.builder().build();
+            programGenerator = new ProgramGenerator(context, outputPath, config.createNamingStrategy());
         }
 
         public void close() {
@@ -179,15 +192,40 @@ public class GenerateBindingMojo extends AbstractMojo {
 
         private void generateBindings(String relativePath) throws MojoExecutionException {
             getLog().info("Generating binding for " + relativePath);
+            String programSource = loadProgram(relativePath);
             String programPath = "classpath:" + relativePath;
-            try (CLProgram program = loadProgram(relativePath)) {
-                TypeParametersConfig typeParameters = TypeParametersConfig.builder().build();
-                try {
-                    programGenerator.generate(program, programPath, getBasePackage(relativePath), typeParameters);
-                } catch (IOException e) {
-                    throw new MojoExecutionException("Error generating bindings for " + relativePath, e);
-                }
+
+            String options = config.compilerOptions != null ? config.compilerOptions : compilerOptions;
+            CLTypeVariables typeVariables = parseTypeArguments();
+
+            ProgramGeneratorRequest generatorRequest = ProgramGeneratorRequest.builder()
+                    .withBasePackage(getBasePackage(relativePath))
+                    .withCompilerOptions(CLCompilerOptions.parse(options))
+                    .withTypeVariables(typeVariables)
+                    .withProgramSource(programSource)
+                    .withProgramPath(programPath)
+                    .withKernelInterfaces(getKernelInterfaces())
+                    .build();
+
+            try {
+                programGenerator.generate(generatorRequest);
+            } catch (IOException e) {
+                throw new MojoExecutionException("Error generating bindings for " + relativePath, e);
             }
+        }
+
+        private List<String> getKernelInterfaces() {
+            List<String> ksi = config.kernelSuperInterfaces != null
+                    ? config.kernelSuperInterfaces
+                    : kernelSuperInterfaces;
+            if (ksi == null)
+                return Collections.emptyList();
+            return ksi;
+        }
+
+        private CLTypeVariables parseTypeArguments() {
+            List<String> args = config.typeArguments != null ? config.typeArguments : typeArguments;
+            return CLTypeVariables.parse(args);
         }
 
         private List<String> collectFiles() throws MojoExecutionException {
@@ -222,12 +260,13 @@ public class GenerateBindingMojo extends AbstractMojo {
             return patterns.stream().anyMatch(i -> pathMatcher.isMatch(i, relativePath));
         }
 
-        private CLProgram loadProgram(String relativePath) {
-            String options = config.compilerOptions != null ? config.compilerOptions : compilerOptions;
-            return context.programBuilder()
-                    .withCompilerOptions(CLCompilerOptions.parse(options).withKernelArgInfo())
-                    .withFile(sourcePath.resolve(relativePath).toString())
-                    .build();
+        private String loadProgram(String relativePath) {
+            try {
+                byte[] bytes = Files.readAllBytes(sourcePath.resolve(relativePath));
+                return new String(bytes, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
 
         private String getBasePackage(String relativePath) throws MojoExecutionException {
@@ -240,10 +279,10 @@ public class GenerateBindingMojo extends AbstractMojo {
             List<String> res = new ArrayList<>(names.length);
             if (bp != null)
                 res.add(bp);
-            for (int i = 0; i < names.length - 1; i++)
-                res.add(names[i]);
+            res.addAll(Arrays.asList(names).subList(0, names.length - 1));
             return String.join(".", res);
         }
 
     }
+
 }
