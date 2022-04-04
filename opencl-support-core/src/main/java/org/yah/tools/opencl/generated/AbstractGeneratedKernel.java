@@ -18,16 +18,11 @@ public abstract class AbstractGeneratedKernel implements AutoCloseable {
 
     protected final AbstractGeneratedProgram generatedProgram;
     protected final CLKernel kernel;
-    protected final List<Runnable> closeables = new ArrayList<>();
+    protected final List<CLBuffer> buffers = new ArrayList<>();
 
     protected AbstractGeneratedKernel(AbstractGeneratedProgram generatedProgram, String kernelName) {
         this.generatedProgram = Objects.requireNonNull(generatedProgram, "generatedProgram is null");
         kernel = generatedProgram.getProgram().newKernel(kernelName);
-        closeables.add(kernel::close);
-    }
-
-    protected void run(NDRange range, @Nullable PointerBuffer eventBuffer) {
-        getCommandQueue().run(kernel, range, null, eventBuffer);
     }
 
     public CLKernel getKernel() {
@@ -40,30 +35,43 @@ public abstract class AbstractGeneratedKernel implements AutoCloseable {
 
     @Override
     public void close() {
-        closeables.forEach(Runnable::run);
-        closeables.clear();
+        buffers.forEach(CLBuffer::close);
+        buffers.clear();
+        kernel.close();
     }
 
-    protected final CLBuffer newCLBuffer(int argIndex, Set<BufferProperty> bufferProperties,
-                                         Function<CLBuffer.Builder, CLBuffer> finisher) {
-        CLBuffer.Builder builder = generatedProgram.getContext().buildBuffer()
-                .withProperties(bufferProperties);
-        CLBuffer buffer = finisher.apply(builder);
-        closeables.add(buffer::close);
-        kernel.setArg(argIndex, buffer);
-        return buffer;
+    protected void run(NDRange range, @Nullable PointerBuffer eventBuffer) {
+        getCommandQueue().run(kernel, range, null, eventBuffer);
     }
 
     protected final CLBuffer closeAndCreate(int argIndex, @Nullable CLBuffer current, BufferProperty[] properties,
                                             Set<BufferProperty> defaultProperties,
                                             Function<CLBuffer.Builder, CLBuffer> finisher) {
         if (current != null)
-            current.close();
+            close(current);
+
         Set<BufferProperty> propertySet;
         if (properties.length == 0)
             propertySet = defaultProperties;
         else
             propertySet = EnumSet.copyOf(Arrays.asList(properties));
         return newCLBuffer(argIndex, propertySet, finisher);
+    }
+
+    private CLBuffer newCLBuffer(int argIndex, Set<BufferProperty> bufferProperties,
+                                         Function<CLBuffer.Builder, CLBuffer> finisher) {
+        CLBuffer.Builder builder = generatedProgram.getContext().buildBuffer()
+                .withProperties(bufferProperties);
+        CLBuffer buffer = finisher.apply(builder);
+        buffers.add(buffer);
+        kernel.setArg(argIndex, buffer);
+        return buffer;
+    }
+
+    private void close(CLBuffer buffer) {
+        if (buffer != null) {
+            buffers.remove(buffer);
+            buffer.close();
+        }
     }
 }
