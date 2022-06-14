@@ -39,7 +39,7 @@ public class GenerateBindingMojo extends AbstractMojo {
     public static final String DEFAULT_OUTPUT_DIRECTORY = "target/generated-sources/opencl-support";
 
     /**
-     * Base directory scaned for
+     * Base directory scanned for cl files
      * If not set, relative file path from resourcePath will be used.
      */
     @Parameter(property = SYSTEM_PROPERTY_PREFIX + "sourceDirectory", defaultValue = DEFAULT_SOURCE_DIRECTORY)
@@ -193,7 +193,12 @@ public class GenerateBindingMojo extends AbstractMojo {
         private void generateBindings(String relativePath) throws MojoExecutionException {
             getLog().info("Generating binding for " + relativePath);
             String programSource = loadProgram(relativePath);
-            String programPath = "classpath:" + relativePath;
+
+            String programPath;
+            if(isInClasspath(relativePath))
+                programPath = "classpath:" + relativePath;
+            else
+                programPath = CLUtils.toStandardPath(sourceDirectory, relativePath);
 
             String options = config.compilerOptions != null ? config.compilerOptions : compilerOptions;
             CLTypeVariables typeVariables = parseTypeArguments();
@@ -212,6 +217,11 @@ public class GenerateBindingMojo extends AbstractMojo {
             } catch (IOException e) {
                 throw new MojoExecutionException("Error generating bindings for " + relativePath, e);
             }
+        }
+
+        private boolean isInClasspath(String relativePath) {
+            // todo : improve by check project resources
+            return sourceDirectory.equals("src/main/resources");
         }
 
         private List<String> getKernelInterfaces() {

@@ -16,6 +16,7 @@ import org.yah.tools.opencl.enums.KernelArgAddressQualifier;
 import org.yah.tools.opencl.enums.KernelArgTypeQualifier;
 
 import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
 import java.util.Objects;
 
 public class ArgumentInterfaceMethodsGenerator {
@@ -66,47 +67,88 @@ public class ArgumentInterfaceMethodsGenerator {
 
     private void generateCreateBufferWithBuffer() {
         MethodNamingStrategy methodNamingStrategy = namingStrategy().createBufferWithBuffer(kernelArgument);
+        Type argumentType = argumentType();
         addMethod(methodNamingStrategy.methodName())
-                .addParameter(argumentType(), methodNamingStrategy.parameterName(0))
+                .addParameter(argumentType, methodNamingStrategy.parameterName(0))
                 .addParameter(new Parameter(addImport(BufferProperty.class), methodNamingStrategy.parameterName(1)).setVarArgs(true))
                 .withJavaDoc(kernelArgument.toString())
                 .implementedBy(CLKernelGenerator.class, g -> g.implementCreateBufferWithBuffer(kernelArgument));
+        if (isNotByteBuffer(argumentType)) {
+            addMethod(methodNamingStrategy.methodName())
+                    .addParameter(ByteBuffer.class, methodNamingStrategy.parameterName(0))
+                    .addParameter(new Parameter(addImport(BufferProperty.class), methodNamingStrategy.parameterName(1)).setVarArgs(true))
+                    .withJavaDoc(kernelArgument.toString())
+                    .implementedBy(CLKernelGenerator.class, g -> g.implementCreateBufferWithBuffer(kernelArgument));
+        }
     }
 
     private void generateWriteBufferMethods() {
         MethodNamingStrategy methodNamingStrategy = namingStrategy().writeBuffer(kernelArgument);
         addImport(Nullable.class);
         String methodName = methodNamingStrategy.methodName();
+        Type argumentType = argumentType();
         addMethod(methodName)
-                .addParameter(argumentType(), methodNamingStrategy.parameterName(0))
+                .addParameter(argumentType, methodNamingStrategy.parameterName(0))
                 .addParameter(PrimitiveType.longType(), methodNamingStrategy.parameterName(1))
                 .addParameter(eventBufferParameter(methodNamingStrategy.parameterName(2)))
                 .withJavaDoc(kernelArgument.toString())
                 .implementedBy(CLKernelGenerator.class, g -> g.implementWriteBufferMethods(kernelArgument));
+        if (isNotByteBuffer(argumentType)) {
+            addMethod(methodName)
+                    .addParameter(ByteBuffer.class, methodNamingStrategy.parameterName(0))
+                    .addParameter(PrimitiveType.longType(), methodNamingStrategy.parameterName(1))
+                    .addParameter(eventBufferParameter(methodNamingStrategy.parameterName(2)))
+                    .withJavaDoc(kernelArgument.toString())
+                    .implementedBy(CLKernelGenerator.class, g -> g.implementWriteBufferMethods(kernelArgument));
+        }
 
         // default writeBuffer
+        argumentType = argumentType();
         addMethod(methodName)
-                .addParameter(argumentType(), methodNamingStrategy.parameterName(0))
+                .addParameter(argumentType, methodNamingStrategy.parameterName(0))
                 .withJavaDoc(kernelArgument.toString())
                 .setDefault(mbb -> mbb.andReturn("%s(%s, 0L, null);", methodName, mbb.getParameterName(0)));
+
+        if (isNotByteBuffer(argumentType)) {
+            addMethod(methodName)
+                    .addParameter(ByteBuffer.class, methodNamingStrategy.parameterName(0))
+                    .withJavaDoc(kernelArgument.toString())
+                    .setDefault(mbb -> mbb.andReturn("%s(%s, 0L, null);", methodName, mbb.getParameterName(0)));
+        }
     }
 
     private void generateReadBufferMethods() {
         MethodNamingStrategy methodNamingStrategy = namingStrategy().readBuffer(kernelArgument);
 
         String methodName = methodNamingStrategy.methodName();
+        Type argumentType = argumentType();
         addMethod(methodName)
-                .addParameter(argumentType(), methodNamingStrategy.parameterName(0))
+                .addParameter(argumentType, methodNamingStrategy.parameterName(0))
                 .addParameter(PrimitiveType.longType(), methodNamingStrategy.parameterName(1))
                 .addParameter(eventBufferParameter(methodNamingStrategy.parameterName(2)))
                 .withJavaDoc(kernelArgument.toString())
                 .implementedBy(CLKernelGenerator.class, g -> g.implementReadBufferMethods(kernelArgument));
+        if (isNotByteBuffer(argumentType)) {
+            addMethod(methodName)
+                    .addParameter(ByteBuffer.class, methodNamingStrategy.parameterName(0))
+                    .addParameter(PrimitiveType.longType(), methodNamingStrategy.parameterName(1))
+                    .addParameter(eventBufferParameter(methodNamingStrategy.parameterName(2)))
+                    .withJavaDoc(kernelArgument.toString())
+                    .implementedBy(CLKernelGenerator.class, g -> g.implementReadBufferMethods(kernelArgument));
+        }
 
         // default readBuffer
+        argumentType = argumentType();
         addMethod(methodName)
-                .addParameter(argumentType(), methodNamingStrategy.parameterName(0))
+                .addParameter(argumentType, methodNamingStrategy.parameterName(0))
                 .withJavaDoc(kernelArgument.toString())
                 .setDefault(mbb -> mbb.andReturn("%s(%s, 0L, null);", methodName, mbb.getParameterName(0)));
+        if (isNotByteBuffer(argumentType)) {
+            addMethod(methodName)
+                    .addParameter(ByteBuffer.class, methodNamingStrategy.parameterName(0))
+                    .withJavaDoc(kernelArgument.toString())
+                    .setDefault(mbb -> mbb.andReturn("%s(%s, 0L, null);", methodName, mbb.getParameterName(0)));
+        }
     }
 
     private void generateValueArgumentMethods() {
@@ -118,7 +160,7 @@ public class ArgumentInterfaceMethodsGenerator {
                 .implementedBy(CLKernelGenerator.class, g -> g.implementSetValue(kernelArgument));
 
         CLType type = kernelArgument.getType();
-        if (type.isVector() && type.asVector().getSize() <= namingStrategy().maxVectorComponentParameters()) {
+        if (type.isVector() && type.asVector().getSize() <= 4) {
             int size = type.asVector().getSize();
             InterfaceMethodBuilder methodBuilder = addMethod(methodNamingStrategy.methodName())
                     .withJavaDoc(kernelArgument.toString())
@@ -182,6 +224,10 @@ public class ArgumentInterfaceMethodsGenerator {
     static boolean shouldRead(ParsedKernelArgument kernelArgument) {
         // if arg is const, device can not write, host do not need to read
         return !kernelArgument.getTypeQualifiers().contains(KernelArgTypeQualifier.CONST);
+    }
+
+    private static boolean isNotByteBuffer(Type argumentType) {
+        return !argumentType.isClassOrInterfaceType() || !argumentType.asClassOrInterfaceType().getNameAsString().equals("ByteBuffer");
     }
 
 }

@@ -28,7 +28,7 @@ public class NDRange3 extends AbstractNDRange<NDRange3> {
     }
 
     public NDRange3 globalWorkOffset(long x, long y, long z) {
-        globalWorkSizesBuffer.limit(3);
+        globalWorkOffsetsBuffer.limit(3);
         globalWorkOffsetsBuffer.put(0, x);
         globalWorkOffsetsBuffer.put(1, y);
         globalWorkOffsetsBuffer.put(2, z);

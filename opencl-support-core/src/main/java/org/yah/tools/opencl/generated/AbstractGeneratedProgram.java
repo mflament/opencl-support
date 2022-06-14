@@ -25,7 +25,7 @@ public abstract class AbstractGeneratedProgram implements AutoCloseable {
         if (device == null)
             device = context.getFirstDevice();
         program = context.programBuilder()
-                .withResource(resourcePath)
+                .withFile(resourcePath)
                 .withDevice(device)
                 .withCompilerOptions(compilerOptions)
                 .build();

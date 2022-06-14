@@ -134,9 +134,10 @@ public class CLKernelGenerator {
 
     MethodBodyGenerator implementSetVectorComponents(ParsedKernelArgument argument) {
         VectorType vectorType = argument.getType().asVector();
+        int size = vectorType.getSize() == 3 ? 4 : vectorType.getSize();
         return mbb -> {
-            String args = IntStream.range(0, vectorType.getSize())
-                    .mapToObj(mbb::getParameterName)
+            String args = IntStream.range(0, size)
+                    .mapToObj(i -> vectorType.getSize() == 3 && i == 3 ? "0" : mbb.getParameterName(i))
                     .collect(Collectors.joining(", "));
             return mbb.addStatement("kernel.setArg(%d, %s);", argument.getArgIndex(), args).andReturn("this");
         };

@@ -34,12 +34,13 @@ public final class CLUtils {
         return Collections.unmodifiableSet(new HashSet<>(from));
     }
 
-    public static Set<String> toStandardPath(Set<String> paths) {
-        return paths.stream().map(CLUtils::toStandardPath).collect(Collectors.toSet());
-    }
-
-    public static List<String> toStandardPath(List<String> paths) {
-        return paths.stream().map(CLUtils::toStandardPath).collect(Collectors.toList());
+    public static String toStandardPath(String... paths) {
+        return Arrays.stream(paths).map(p -> {
+            String r = p.replaceAll("\\\\","/");
+            if (r.startsWith("/")) r = r.substring(1);
+            if (r.endsWith("/")) r = r.substring(0, r.length() - 1);
+            return r;
+        }).collect(Collectors.joining("/"));
     }
 
     public static String toStandardPath(String p) {

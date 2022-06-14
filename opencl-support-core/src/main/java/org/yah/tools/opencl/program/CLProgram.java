@@ -135,15 +135,24 @@ public class CLProgram implements CLObject {
         clGetProgramInfo(id, CL_PROGRAM_BINARIES, bufferPointers, null);
 
         Map<CLDevice, ByteBuffer> binaries = new LinkedHashMap<>(devices.size());
-        for (int i = 0, offset = 0; i < devices.size(); i++) {
+        for (int i = 0; i < devices.size(); i++) {
             binaries.put(devices.get(i), deviceBinaries.get(i));
         }
         return binaries;
     }
 
     public List<String> getKernelNames() {
-        String names = CLUtils.readSizedString((sb, bb) -> clGetProgramInfo(id, CL_PROGRAM_KERNEL_NAMES, bb, sb));
-        return Arrays.asList(names.split(";"));
+        if (getNumKernels() > 0) {
+            String names = CLUtils.readSizedString((sb, bb) -> clGetProgramInfo(id, CL_PROGRAM_KERNEL_NAMES, bb, sb));
+            return Arrays.asList(names.split(";"));
+        }
+        return Collections.emptyList();
+    }
+
+    public int getNumKernels() {
+        PointerBuffer pb = BufferUtils.createPointerBuffer(1);
+        clGetProgramInfo(id, CL_PROGRAM_NUM_KERNELS, pb, null);
+        return (int) pb.get(0);
     }
 
     public List<CLKernel> newKernels() {

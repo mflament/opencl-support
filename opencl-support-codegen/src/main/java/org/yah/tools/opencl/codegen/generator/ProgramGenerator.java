@@ -38,7 +38,6 @@ public class ProgramGenerator {
 
     public void generate(ProgramGeneratorRequest request) throws IOException {
         Objects.requireNonNull(request, "request is null");
-        Files.createDirectories(outputDirectory);
 
         CLTypeResolver clTypeResolver = new CLTypeResolver();
         ProgramParser parser = new ProgramParser(clTypeResolver);
@@ -50,7 +49,11 @@ public class ProgramGenerator {
             registerTypeParameters(clTypeVariables, clTypeResolver);
             program = loadProgram(request.getProgramSource(), request.getCompilerOptions(), clTypeVariables);
         }
+        if (program.getKernelNames().isEmpty())
+            return;
         ParsedProgram parsedProgram = parser.parse(program, request.getProgramPath());
+
+        Files.createDirectories(outputDirectory);
 
         JavaTypeVariables typeVariables = JavaTypeVariables.builder(clTypeVariables)
                 .withKernels(parsedProgram.getKernels())

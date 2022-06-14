@@ -48,6 +48,11 @@ public class InterfaceMethodBuilder {
         return this;
     }
 
+    public InterfaceMethodBuilder addParameter(Class<?> javaType, String name) {
+        methodDeclaration.addParameter(javaType, name);
+        return this;
+    }
+
     public InterfaceMethodBuilder addParameter(Parameter parameter) {
         methodDeclaration.addParameter(parameter);
         return this;
